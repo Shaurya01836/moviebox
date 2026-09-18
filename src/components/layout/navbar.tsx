@@ -54,16 +54,7 @@ export function Navbar() {
     <header className={headerClasses}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Top Left Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/15 backdrop-blur-md shadow-lg group-hover:scale-105 transition-transform">
-            <svg
-              className="h-5 w-5 text-white fill-white"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 4v2h3V7H6zm5 0v2h3V7h-3zm5 0v2h3V7h-3zM6 11v2h3v-2H6zm5 0v2h3v-2h-3zm5 0v2h3v-2h-3zM6 15v2h3v-2H6zm5 0v2h3v-2h-3zm5 0v2h3v-2h-3z" />
-            </svg>
-          </div>
+        <Link href="/" className="flex items-center group">
           <span className="text-lg font-bold tracking-tight text-white">
             Movie<span className="text-red-500">Box</span>
           </span>
