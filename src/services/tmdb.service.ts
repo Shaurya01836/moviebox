@@ -1,6 +1,6 @@
 import { env } from '@/lib/config/env';
-import { RawTmdbSearchResponse, SearchResponse, SearchResultItem } from '@/features/search/types';
-import { MovieDetails, TvDetails } from '@/types/movie';
+import { Movie, MovieDetails, TvDetails } from '@/types/movie';
+import { RawTmdbMediaItem, RawTmdbSearchResponse, SearchResponse, SearchResultItem } from '@/features/search/types';
 
 export class TmdbService {
   private static getPosterUrl(path?: string | null): string {
@@ -17,6 +17,67 @@ export class TmdbService {
     return `${env.tmdb.imageBaseUrl}/w1280${path}`;
   }
 
+  private static mapTmdbItemToMovie(item: RawTmdbMediaItem): Movie {
+    const title = item.title || item.name || 'Untitled';
+    const releaseDate = item.release_date || item.first_air_date || '';
+    const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : 2025;
+
+    return {
+      id: item.id.toString(),
+      title,
+      overview: item.overview || 'No overview available.',
+      posterPath: this.getPosterUrl(item.poster_path),
+      backdropPath: this.getBackdropUrl(item.backdrop_path),
+      releaseYear: isNaN(releaseYear) ? 2025 : releaseYear,
+      voteAverage: item.vote_average ? Number(item.vote_average.toFixed(1)) : 0,
+      voteCount: item.vote_count || 0,
+      genres: [item.media_type === 'tv' ? 'TV Show' : 'Movie'],
+      qualityBadge: item.vote_average && item.vote_average >= 8 ? '4K' : 'HD',
+      isTrending: true,
+    };
+  }
+
+  /**
+   * Fetch Trending Movies of the week from TMDB
+   */
+  static async getTrendingMovies(page = 1): Promise<Movie[]> {
+    const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
+    const url = `${env.tmdb.baseUrl}/trending/movie/week?api_key=${apiKey}&page=${page}`;
+
+    try {
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (!res.ok) return [];
+
+      const data: RawTmdbSearchResponse = await res.json();
+      return (data.results || []).map((item) => this.mapTmdbItemToMovie({ ...item, media_type: 'movie' }));
+    } catch (err) {
+      console.error('Error fetching TMDB trending movies:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch Popular Movies from TMDB
+   */
+  static async getPopularMovies(page = 1): Promise<Movie[]> {
+    const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
+    const url = `${env.tmdb.baseUrl}/movie/popular?api_key=${apiKey}&page=${page}`;
+
+    try {
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (!res.ok) return [];
+
+      const data: RawTmdbSearchResponse = await res.json();
+      return (data.results || []).map((item) => this.mapTmdbItemToMovie({ ...item, media_type: 'movie' }));
+    } catch (err) {
+      console.error('Error fetching TMDB popular movies:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Search multi-media (Movies & TV Shows) from TMDB
+   */
   static async searchMulti(query: string, page = 1): Promise<SearchResponse> {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) {
@@ -49,21 +110,9 @@ export class TmdbService {
     );
 
     const transformedResults: SearchResultItem[] = filteredResults.map((item) => {
-      const title = item.title || item.name || 'Untitled';
-      const releaseDate = item.release_date || item.first_air_date || '';
-      const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : 2025;
-
+      const movie = this.mapTmdbItemToMovie(item);
       return {
-        id: item.id.toString(),
-        title,
-        overview: item.overview || 'No overview available.',
-        posterPath: this.getPosterUrl(item.poster_path),
-        backdropPath: this.getBackdropUrl(item.backdrop_path),
-        releaseYear: isNaN(releaseYear) ? 2025 : releaseYear,
-        voteAverage: item.vote_average ? Number(item.vote_average.toFixed(1)) : 0,
-        voteCount: item.vote_count || 0,
-        genres: [item.media_type === 'tv' ? 'TV Show' : 'Movie'],
-        qualityBadge: item.vote_average && item.vote_average >= 8 ? '4K' : 'HD',
+        ...movie,
         mediaKind: item.media_type === 'tv' ? 'tv' : 'movie',
       };
     });
@@ -93,6 +142,7 @@ export class TmdbService {
     const data = await res.json();
     const releaseYear = data.release_date ? new Date(data.release_date).getFullYear() : 2025;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const director = data.credits?.crew?.find((c: any) => c.job === 'Director')?.name;
 
     return {
@@ -104,6 +154,7 @@ export class TmdbService {
       releaseYear: isNaN(releaseYear) ? 2025 : releaseYear,
       voteAverage: data.vote_average ? Number(data.vote_average.toFixed(1)) : 0,
       voteCount: data.vote_count || 0,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       genres: data.genres?.map((g: any) => g.name) || [],
       durationMinutes: data.runtime,
       qualityBadge: data.vote_average && data.vote_average >= 8 ? '4K' : 'HD',
@@ -114,6 +165,7 @@ export class TmdbService {
       revenue: data.revenue,
       homepage: data.homepage,
       director,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       cast: data.credits?.cast?.slice(0, 10).map((c: any) => ({
         id: c.id,
         name: c.name,
@@ -149,6 +201,7 @@ export class TmdbService {
       releaseYear: isNaN(releaseYear) ? 2025 : releaseYear,
       voteAverage: data.vote_average ? Number(data.vote_average.toFixed(1)) : 0,
       voteCount: data.vote_count || 0,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       genres: data.genres?.map((g: any) => g.name) || [],
       durationMinutes: data.episode_run_time?.[0],
       qualityBadge: data.vote_average && data.vote_average >= 8 ? '4K' : 'HD',
@@ -159,6 +212,7 @@ export class TmdbService {
       numberOfSeasons: data.number_of_seasons,
       homepage: data.homepage,
       creator,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       cast: data.credits?.cast?.slice(0, 10).map((c: any) => ({
         id: c.id,
         name: c.name,

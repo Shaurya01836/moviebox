@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { TmdbService } from '@/services/tmdb.service';
-import { Rating } from '@/components/shared/rating';
 import { GenreBadge } from '@/components/shared/genre-badge';
 import { Badge } from '@/components/ui/badge';
 import { Play, Plus, Calendar, Clock, Star } from 'lucide-react';
@@ -71,7 +70,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
               </h1>
               {movie.tagline && (
                 <p className="text-lg md:text-xl italic text-zinc-300 font-light drop-shadow">
-                  "{movie.tagline}"
+                  &quot;{movie.tagline}&quot;
                 </p>
               )}
             </div>
