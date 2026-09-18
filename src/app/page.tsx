@@ -14,15 +14,16 @@ export default async function HomePage() {
   const trendingMovies = tmdbTrending.length > 0 ? tmdbTrending : POPULAR_MOVIES;
   const popularMovies = tmdbPopular.length > 0 ? tmdbPopular : POPULAR_MOVIES;
 
-  // Select #1 trending movie for the Hero spotlight banner
-  const featuredMovie = trendingMovies[0] || FEATURED_MOVIE;
+  // Select top 5 trending movies for the Hero spotlight banner
+  const featuredMovies = trendingMovies.slice(0, 5);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-12 sm:px-6 lg:px-8">
-      {/* Hero Spotlight Section */}
-      <HeroBanner movie={featuredMovie} />
+    <div className="w-full pb-8">
+      {/* Hero Spotlight Section (Full Width) */}
+      <HeroBanner movies={featuredMovies} />
 
-      {/* Genre Exploration Bar */}
+      <div className="mx-auto max-w-7xl px-4 mt-8 space-y-12 sm:px-6 lg:px-8">
+        {/* Genre Exploration Bar */}
       <GenreBar />
 
       {/* Trending Movies Carousel / Section */}
@@ -40,6 +41,7 @@ export default async function HomePage() {
         movies={popularMovies.slice(0, 12)}
         viewAllHref="/movies"
       />
+    </div>
     </div>
   );
 }

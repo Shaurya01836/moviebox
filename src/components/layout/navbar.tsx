@@ -1,12 +1,47 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Home, Film, Tv, Bookmark, Search, Settings } from 'lucide-react';
 import { MobileNav } from './mobile-nav';
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        router.push('/search');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [router]);
+
+  const isHome = pathname === '/';
+  
+  // On home page, we want it fixed and transparent at the top. On other pages, sticky and blurred.
+  const headerClasses = isHome
+    ? `fixed top-0 z-50 w-full transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 py-0' 
+          : 'bg-transparent border-transparent py-2'
+      }`
+    : 'sticky top-0 z-50 w-full bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 transition-all';
 
   const navItems = [
     { title: 'Home', href: '/', icon: Home },
@@ -16,7 +51,7 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-zinc-950/40 backdrop-blur-xl border-b border-white/5 transition-all">
+    <header className={headerClasses}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Top Left Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
@@ -61,13 +96,14 @@ export function Navbar() {
             <div className="mx-1.5 h-4 w-px bg-white/20" />
 
             {/* Search Action Icon */}
-            <Link
-              href="/search"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-300 hover:bg-white/15 hover:text-white transition-colors"
-              title="Search"
+            <button
+              onClick={() => router.push('/search')}
+              className="flex items-center gap-1.5 rounded-full text-zinc-300 hover:bg-white/15 hover:text-white px-3 py-1.5 transition-colors"
+              title="Search (Ctrl+K)"
             >
-              <Search className="h-4 w-4" />
-            </Link>
+              <Search className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-mono bg-white/10 px-1.5 py-0.5 rounded border border-white/10 hidden sm:block">Ctrl K</span>
+            </button>
 
             {/* Settings Action Icon */}
             <Link
