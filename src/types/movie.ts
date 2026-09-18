@@ -22,6 +22,27 @@ export interface Movie {
   qualityBadge?: string;
   isFeatured?: boolean;
   isTrending?: boolean;
+  mediaKind?: MediaKind;
+}
+
+export interface MovieDetails extends Movie {
+  tagline?: string;
+  status?: string;
+  budget?: number;
+  revenue?: number;
+  homepage?: string;
+  cast?: { id: number; name: string; character: string; profilePath: string }[];
+  director?: string;
+}
+
+export interface TvDetails extends Movie {
+  tagline?: string;
+  status?: string;
+  numberOfEpisodes?: number;
+  numberOfSeasons?: number;
+  homepage?: string;
+  cast?: { id: number; name: string; character: string; profilePath: string }[];
+  creator?: string;
 }
 
 export interface FilterOptions {

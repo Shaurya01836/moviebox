@@ -14,7 +14,7 @@ export function MovieCard({ movie }: MovieCardProps) {
   return (
     <div className="group relative flex flex-col space-y-2.5 transition-all">
       {/* Poster Image Container */}
-      <Link href={`/movies/${movie.id}`} className="relative block overflow-hidden rounded-2xl">
+      <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`} className="relative block overflow-hidden rounded-2xl">
         <Poster src={movie.posterPath} alt={movie.title} />
 
         {/* Quality or Age Badge */}
@@ -48,7 +48,7 @@ export function MovieCard({ movie }: MovieCardProps) {
           <Rating value={movie.voteAverage} />
         </div>
 
-        <Link href={`/movies/${movie.id}`} className="block">
+        <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`} className="block">
           <h3 className="line-clamp-1 text-sm font-semibold text-zinc-100 group-hover:text-red-400 transition-colors">
             {movie.title}
           </h3>

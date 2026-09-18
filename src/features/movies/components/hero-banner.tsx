@@ -77,7 +77,7 @@ export function HeroBanner({ movie }: HeroBannerProps) {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-3 pt-4">
-            <Link href={`/movies/${movie.id}`}>
+            <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`}>
               <Button variant="primary" size="lg" className="shadow-red-600/40">
                 <Play className="h-5 w-5 fill-white ml-0.5" />
                 Watch Now
@@ -87,7 +87,7 @@ export function HeroBanner({ movie }: HeroBannerProps) {
               <Plus className="h-5 w-5" />
               Add to Watchlist
             </Button>
-            <Link href={`/movies/${movie.id}`}>
+            <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`}>
               <Button variant="ghost" size="lg" className="text-zinc-300 hover:text-white">
                 <Info className="h-5 w-5" />
                 Details
