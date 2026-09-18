@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { TmdbService } from '@/services/tmdb.service';
 import { GenreBadge } from '@/components/shared/genre-badge';
 import { Badge } from '@/components/ui/badge';
+import { BackButton } from '@/components/shared/back-button';
 import { Play, Plus, Calendar, Clock, Star, Tv } from 'lucide-react';
 
 interface TvPageProps {
@@ -34,6 +35,11 @@ export default async function TvPage({ params }: TvPageProps) {
         {/* Gradient overlays for cinematic fade into dark background */}
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent lg:w-3/4" />
+
+        {/* Back Button overlay */}
+        <div className="absolute top-24 left-4 z-30 sm:left-8">
+          <BackButton />
+        </div>
       </div>
 
       {/* Content Section */}
