@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Play, Github, Twitter, Instagram } from 'lucide-react';
+import { Play, Globe, Share2, Film } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -20,14 +20,14 @@ export function Footer() {
               MovieBox is a modern frontend architecture foundation designed for high-performance movie & TV streaming experiences, watchlist management, and community reviews.
             </p>
             <div className="flex items-center gap-4 text-zinc-400 pt-2">
-              <Link href="#" className="hover:text-white transition-colors">
-                <Twitter className="h-4 w-4" />
+              <Link href="#" className="hover:text-white transition-colors" title="Website">
+                <Globe className="h-4 w-4" />
               </Link>
-              <Link href="#" className="hover:text-white transition-colors">
-                <Github className="h-4 w-4" />
+              <Link href="#" className="hover:text-white transition-colors" title="Share">
+                <Share2 className="h-4 w-4" />
               </Link>
-              <Link href="#" className="hover:text-white transition-colors">
-                <Instagram className="h-4 w-4" />
+              <Link href="#" className="hover:text-white transition-colors" title="Movies">
+                <Film className="h-4 w-4" />
               </Link>
             </div>
           </div>
