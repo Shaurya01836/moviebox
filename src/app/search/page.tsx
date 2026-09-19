@@ -98,32 +98,32 @@ function SearchPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col pt-20 sm:pt-24">
+    <div className="min-h-screen bg-zinc-950 text-white flex flex-col pt-16 sm:pt-24">
 
       {/* Main Search Input Section */}
-      <div className="w-full border-b border-white/10 bg-zinc-950/90 py-3 px-4 sm:px-8 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center gap-4">
+      <div className="w-full border-b border-white/10 bg-zinc-950/90 py-2.5 sm:py-3 px-3.5 sm:px-8 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center gap-2.5 sm:gap-4">
           <div className="relative flex-1">
             {isLoading ? (
-              <Loader2 className="absolute left-4 top-3.5 h-5 w-5 text-red-500 animate-spin" />
+              <Loader2 className="absolute left-3.5 sm:left-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-red-500 animate-spin" />
             ) : (
-              <Search className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
+              <Search className="absolute left-3.5 sm:left-4 top-3 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" />
             )}
             <Input
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search millions of movies, TV shows, anime..."
-              className="h-12 pl-12 pr-12 text-base sm:text-lg bg-zinc-900/90 border-zinc-800 text-white placeholder:text-zinc-500 rounded-2xl focus-visible:ring-red-500"
+              placeholder="Search movies, TV shows, anime..."
+              className="h-10 sm:h-12 pl-9 sm:pl-12 pr-9 sm:pr-12 text-sm sm:text-lg bg-zinc-900/90 border-zinc-800 text-white placeholder:text-zinc-500 rounded-xl sm:rounded-2xl focus-visible:ring-red-500"
             />
             {query && (
               <button
                 type="button"
                 onClick={handleClear}
-                className="absolute right-4 top-3 text-zinc-400 hover:text-white transition-colors p-1 cursor-pointer"
+                className="absolute right-3 sm:right-4 top-2.5 sm:top-3 text-zinc-400 hover:text-white transition-colors p-1 cursor-pointer"
                 title="Clear Search"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             )}
           </div>
@@ -131,7 +131,7 @@ function SearchPageContent() {
           <button
             type="button"
             onClick={() => router.push('/')}
-            className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/10 px-4 py-2.5 text-xs font-bold text-zinc-200 hover:bg-white/20 hover:text-white transition-all cursor-pointer select-none shrink-0"
+            className="flex items-center gap-1.5 rounded-xl sm:rounded-2xl border border-white/10 bg-white/10 px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-zinc-200 hover:bg-white/20 hover:text-white transition-all cursor-pointer select-none shrink-0"
           >
             <span>Close</span>
             <kbd className="hidden sm:inline-block font-mono text-[10px] text-zinc-400">ESC</kbd>
@@ -140,11 +140,11 @@ function SearchPageContent() {
       </div>
 
       {/* Results / Suggestions Container */}
-      <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 space-y-8">
+      <div className="mx-auto w-full max-w-7xl flex-1 px-3.5 py-6 sm:px-8 space-y-6 sm:space-y-8">
         {/* Quick Suggestion Chips when empty */}
         {!query.trim() && (
-          <div className="space-y-4 pt-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
               Trending Search Suggestions
             </div>
             <div className="flex flex-wrap gap-2">
@@ -153,7 +153,7 @@ function SearchPageContent() {
                   key={suggestion}
                   type="button"
                   onClick={() => setQuery(suggestion)}
-                  className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2 text-xs font-medium text-zinc-300 hover:border-red-500/50 hover:bg-red-500/10 hover:text-white transition-all cursor-pointer select-none"
+                  className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-medium text-zinc-300 hover:border-red-500/50 hover:bg-red-500/10 hover:text-white transition-all cursor-pointer select-none"
                 >
                   {suggestion}
                 </button>
@@ -171,11 +171,11 @@ function SearchPageContent() {
 
         {/* Empty Result */}
         {query.trim() && !isLoading && results.length === 0 && !errorMessage && (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-500">
-              <Film className="h-8 w-8" />
+          <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-500">
+              <Film className="h-7 w-7" />
             </div>
-            <h3 className="text-lg font-bold text-white">No results found for &quot;{query}&quot;</h3>
+            <h3 className="text-base sm:text-lg font-bold text-white">No results found for &quot;{query}&quot;</h3>
             <p className="text-xs text-zinc-400 max-w-sm">
               Try checking spelling or search for another movie, TV series, or anime.
             </p>
@@ -189,7 +189,7 @@ function SearchPageContent() {
               <span>Found {results.length} results for &quot;<strong className="text-white">{query}</strong>&quot;</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-3.5 sm:gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {results.map((item, index) => (
                 <div key={`${item.mediaKind}-${item.id}`}>
                   <MovieCard movie={item} index={index} />

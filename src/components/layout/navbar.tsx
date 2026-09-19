@@ -142,7 +142,7 @@ export function Navbar() {
 
           {/* Mobile Drawer Toggle */}
           <div className="md:hidden">
-            <MobileNav />
+            <MobileNav onOpenAuth={handleOpenAuth} />
           </div>
         </div>
       </header>

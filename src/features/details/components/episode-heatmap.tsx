@@ -38,13 +38,13 @@ export function EpisodeHeatmap({ seasons, allEpisodes }: EpisodeHeatmapProps) {
   };
 
   return (
-    <div className="py-12 px-6 lg:px-16 mx-auto max-w-[1600px]">
+    <div className="py-8 sm:py-12 px-4 sm:px-6 lg:px-16 mx-auto max-w-[1600px]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">Episode Ratings</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Episode Ratings</h2>
           
           {/* Legend */}
-          <div className="flex flex-wrap items-center gap-4 text-[11px] font-bold text-zinc-400">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[10px] sm:text-[11px] font-bold text-zinc-400">
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#119911]" /> 9.0+</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#21b721]" /> 8.0–8.9</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#f7aa11]" /> 7.0–7.9</div>
@@ -55,7 +55,7 @@ export function EpisodeHeatmap({ seasons, allEpisodes }: EpisodeHeatmapProps) {
         </div>
       </div>
 
-      <div className="w-full overflow-x-auto hide-scrollbar pb-6 rounded-2xl bg-zinc-950 border border-white/5 p-6 shadow-2xl">
+      <div className="w-full overflow-x-auto scrollbar-none pb-4 sm:pb-6 rounded-2xl bg-zinc-950 border border-white/5 p-4 sm:p-6 shadow-2xl">
         <div className="min-w-max">
           {/* Header Row (Seasons) */}
           <div className="flex">
