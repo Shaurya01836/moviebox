@@ -26,7 +26,6 @@ function SearchPageContent() {
   const [query, setQuery] = React.useState(initialQuery);
   const [results, setResults] = React.useState<SearchResultItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [isNavigating, setIsNavigating] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -98,18 +97,8 @@ function SearchPageContent() {
     router.replace('/search', { scroll: false });
   };
 
-  const handleItemClick = () => {
-    setIsNavigating(true);
-  };
-
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col pt-2 sm:pt-4">
-      {/* Minimal Spinner Loader Overlay when clicking item */}
-      {isNavigating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 backdrop-blur-sm">
-          <Loader2 className="h-8 w-8 animate-spin text-red-500" />
-        </div>
-      )}
+    <div className="min-h-screen bg-zinc-950 text-white flex flex-col pt-20 sm:pt-24">
 
       {/* Main Search Input Section */}
       <div className="w-full border-b border-white/10 bg-zinc-950/90 py-3 px-4 sm:px-8 backdrop-blur-xl">
@@ -201,9 +190,9 @@ function SearchPageContent() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {results.map((item) => (
-                <div key={`${item.mediaKind}-${item.id}`} onClick={handleItemClick}>
-                  <MovieCard movie={item} />
+              {results.map((item, index) => (
+                <div key={`${item.mediaKind}-${item.id}`}>
+                  <MovieCard movie={item} index={index} />
                 </div>
               ))}
             </div>

@@ -60,9 +60,22 @@ export function HeroBanner({ movies }: HeroBannerProps) {
           className="max-w-2xl space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"
         >
           {/* Title */}
-          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl drop-shadow-lg leading-tight">
-            {currentMovie.title}
-          </h1>
+          {currentMovie.logoPath ? (
+            <div className="relative h-20 w-48 sm:h-28 sm:w-72 md:h-32 md:w-80 lg:h-40 lg:w-[450px] mb-2 drop-shadow-2xl">
+              <Image 
+                src={currentMovie.logoPath} 
+                alt={currentMovie.title}
+                fill
+                className="object-contain object-left"
+                sizes="(max-width: 768px) 300px, 450px"
+                priority
+              />
+            </div>
+          ) : (
+            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl drop-shadow-lg leading-tight">
+              {currentMovie.title}
+            </h1>
+          )}
 
           {/* Metadata Row (★ 7.8/10 · 🗓 2026 · 🚀 Genre) */}
           <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-zinc-200 drop-shadow">

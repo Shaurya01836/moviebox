@@ -1,5 +1,5 @@
 import { env } from '@/lib/config/env';
-import { Movie, MovieDetails, TvDetails } from '@/types/movie';
+import { Movie, MovieDetails, TvDetails, TvEpisode, TvSeason } from '@/types/movie';
 import { RawTmdbMediaItem, RawTmdbSearchResponse, SearchResponse, SearchResultItem } from '@/features/search/types';
 
 export class TmdbService {
@@ -31,10 +31,37 @@ export class TmdbService {
       releaseYear: isNaN(releaseYear) ? 2025 : releaseYear,
       voteAverage: item.vote_average ? Number(item.vote_average.toFixed(1)) : 0,
       voteCount: item.vote_count || 0,
-      genres: [item.media_type === 'tv' ? 'TV Show' : 'Movie'],
+      genres: [
+        item.media_type === 'tv' ? 'TV Show' : 'Movie',
+        ...(item.genre_ids?.includes(16) ? ['Animation'] : [])
+      ],
       qualityBadge: item.vote_average && item.vote_average >= 8 ? '4K' : 'HD',
       isTrending: true,
     };
+  }
+
+  static async populateLogosForMovies(movies: Movie[]): Promise<Movie[]> {
+    const promises = movies.map(async (movie) => {
+      try {
+        const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
+        const type = movie.mediaKind === 'tv' ? 'tv' : 'movie';
+        const url = `${env.tmdb.baseUrl}/${type}/${movie.id}/images?api_key=${apiKey}&include_image_language=en,null`;
+        
+        const res = await fetch(url, { next: { revalidate: 3600 } });
+        if (!res.ok) return movie;
+        
+        const data = await res.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const enLogo = data.logos?.find((l: any) => l.iso_639_1 === 'en' || l.iso_639_1 === null);
+        if (enLogo) {
+          movie.logoPath = this.getPosterUrl(enLogo.file_path);
+        }
+      } catch (e) {
+        // ignore error and return movie without logo
+      }
+      return movie;
+    });
+    return Promise.all(promises);
   }
 
   /**
@@ -128,7 +155,7 @@ export class TmdbService {
 
   static async getMovieDetails(id: string): Promise<MovieDetails | null> {
     const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
-    const url = `${env.tmdb.baseUrl}/movie/${id}?api_key=${apiKey}&append_to_response=credits`;
+    const url = `${env.tmdb.baseUrl}/movie/${id}?api_key=${apiKey}&append_to_response=credits,images&include_image_language=en,null`;
 
     const res = await fetch(url, {
       next: { revalidate: 3600 },
@@ -145,15 +172,21 @@ export class TmdbService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const director = data.credits?.crew?.find((c: any) => c.job === 'Director')?.name;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const enLogo = data.images?.logos?.find((l: any) => l.iso_639_1 === 'en' || l.iso_639_1 === null);
+    const logoPath = enLogo?.file_path ? this.getPosterUrl(enLogo.file_path) : undefined;
+
     return {
       id: data.id.toString(),
       title: data.title || data.original_title,
       overview: data.overview,
       posterPath: this.getPosterUrl(data.poster_path),
       backdropPath: this.getBackdropUrl(data.backdrop_path),
+      logoPath,
       releaseYear: isNaN(releaseYear) ? 2025 : releaseYear,
       voteAverage: data.vote_average ? Number(data.vote_average.toFixed(1)) : 0,
       voteCount: data.vote_count || 0,
+      originalLanguage: data.original_language?.toUpperCase() || 'EN',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       genres: data.genres?.map((g: any) => g.name) || [],
       durationMinutes: data.runtime,
@@ -177,7 +210,7 @@ export class TmdbService {
 
   static async getTvDetails(id: string): Promise<TvDetails | null> {
     const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
-    const url = `${env.tmdb.baseUrl}/tv/${id}?api_key=${apiKey}&append_to_response=credits`;
+    const url = `${env.tmdb.baseUrl}/tv/${id}?api_key=${apiKey}&append_to_response=credits,images&include_image_language=en,null`;
 
     const res = await fetch(url, {
       next: { revalidate: 3600 },
@@ -192,15 +225,31 @@ export class TmdbService {
     const releaseYear = data.first_air_date ? new Date(data.first_air_date).getFullYear() : 2025;
     const creator = data.created_by?.[0]?.name;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const enLogo = data.images?.logos?.find((l: any) => l.iso_639_1 === 'en' || l.iso_639_1 === null);
+    const logoPath = enLogo?.file_path ? this.getPosterUrl(enLogo.file_path) : undefined;
+
     return {
       id: data.id.toString(),
       title: data.name || data.original_name,
       overview: data.overview,
       posterPath: this.getPosterUrl(data.poster_path),
       backdropPath: this.getBackdropUrl(data.backdrop_path),
+      logoPath,
       releaseYear: isNaN(releaseYear) ? 2025 : releaseYear,
       voteAverage: data.vote_average ? Number(data.vote_average.toFixed(1)) : 0,
       voteCount: data.vote_count || 0,
+      originalLanguage: data.original_language?.toUpperCase() || 'EN',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      networks: data.networks?.map((n: any) => n.name) || [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      seasons: data.seasons?.filter((s: any) => s.season_number > 0).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        seasonNumber: s.season_number,
+        episodeCount: s.episode_count,
+        posterPath: s.poster_path ? this.getPosterUrl(s.poster_path) : ''
+      })) || [],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       genres: data.genres?.map((g: any) => g.name) || [],
       durationMinutes: data.episode_run_time?.[0],
@@ -220,5 +269,58 @@ export class TmdbService {
         profilePath: c.profile_path ? this.getPosterUrl(c.profile_path) : ''
       })) || []
     };
+  }
+
+  /**
+   * Fetch details for a specific TV season
+   */
+  static async getTvSeasonDetails(tvId: string, seasonNumber: number): Promise<TvEpisode[]> {
+    const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
+    const url = `${env.tmdb.baseUrl}/tv/${tvId}/season/${seasonNumber}?api_key=${apiKey}`;
+
+    try {
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (!res.ok) return [];
+
+      const data = await res.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data.episodes || []).map((ep: any) => ({
+        id: ep.id,
+        name: ep.name,
+        overview: ep.overview,
+        episodeNumber: ep.episode_number,
+        seasonNumber: ep.season_number,
+        stillPath: ep.still_path ? this.getPosterUrl(ep.still_path) : undefined,
+        voteAverage: ep.vote_average ? Number(ep.vote_average.toFixed(1)) : 0,
+        runtime: ep.runtime,
+        airDate: ep.air_date
+      }));
+    } catch (err) {
+      console.error(`Error fetching TV season ${seasonNumber}:`, err);
+      return [];
+    }
+  }
+
+  /**
+   * Concurrently fetch all episodes across given seasons for the heatmap
+   */
+  static async getAllTvEpisodes(tvId: string, seasons: TvSeason[]): Promise<TvEpisode[]> {
+    const validSeasons = seasons.filter(s => s.seasonNumber > 0 && s.episodeCount > 0);
+    const results: TvEpisode[][] = [];
+    
+    try {
+      // Fetch in batches of 3 to avoid TMDB rate limits and ECONNRESET for long-running anime/shows
+      const batchSize = 3;
+      for (let i = 0; i < validSeasons.length; i += batchSize) {
+        const batch = validSeasons.slice(i, i + batchSize);
+        const promises = batch.map(s => this.getTvSeasonDetails(tvId, s.seasonNumber));
+        const batchResults = await Promise.all(promises);
+        results.push(...batchResults);
+      }
+      return results.flat();
+    } catch (err) {
+      console.error('Error fetching all TV episodes:', err);
+      return [];
+    }
   }
 }

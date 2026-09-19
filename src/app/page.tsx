@@ -14,8 +14,8 @@ export default async function HomePage() {
   const trendingMovies = tmdbTrending.length > 0 ? tmdbTrending : POPULAR_MOVIES;
   const popularMovies = tmdbPopular.length > 0 ? tmdbPopular : POPULAR_MOVIES;
 
-  // Select top 5 trending movies for the Hero spotlight banner
-  const featuredMovies = trendingMovies.slice(0, 5);
+  // Select top 5 trending movies for the Hero spotlight banner and fetch their logos
+  const featuredMovies = await TmdbService.populateLogosForMovies(trendingMovies.slice(0, 5));
 
   return (
     <div className="w-full pb-8">

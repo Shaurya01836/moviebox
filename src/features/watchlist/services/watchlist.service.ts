@@ -1,102 +1,111 @@
+import { createBrowserClient } from '@supabase/ssr';
 import { WatchlistItem, WatchStatus, AspectRatings, JournalEntry } from '../types';
 import { MediaKind } from '@/types/movie';
 
-const STORAGE_KEY = 'moviebox_watchlist_items';
-const WATCHLIST_CHANGE_EVENT = 'moviebox_watchlist_updated';
+// Helper to get Supabase client directly in the service
+function getSupabase() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 export class WatchlistService {
-  private static getStoredItems(): WatchlistItem[] {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (err) {
-      console.error('Error reading watchlist from localStorage:', err);
+  static async getAll(userId: string): Promise<WatchlistItem[]> {
+    if (!userId) return [];
+    const supabase = getSupabase();
+    
+    const { data, error } = await supabase
+      .from('watchlist')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching watchlist from Supabase:', error);
       return [];
     }
+
+    // Map database snake_case columns back to camelCase for the frontend
+    return (data || []).map(row => ({
+      id: row.id,
+      mediaId: row.media_id,
+      mediaKind: row.media_kind,
+      title: row.title,
+      posterPath: row.poster_path,
+      backdropPath: row.backdrop_path,
+      releaseYear: row.release_year,
+      voteAverage: row.vote_average,
+      genres: row.genres || [],
+      status: row.status,
+      userRating: row.user_rating,
+      aspects: row.aspects || {},
+      journal: row.journal || undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
   }
 
-  private static saveStoredItems(items: WatchlistItem[]) {
-    if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-      window.dispatchEvent(new CustomEvent(WATCHLIST_CHANGE_EVENT, { detail: items }));
-    } catch (err) {
-      console.error('Error saving watchlist to localStorage:', err);
+  static async upsert(
+    userId: string, 
+    data: {
+      mediaId: string;
+      mediaKind: MediaKind;
+      title: string;
+      posterPath: string;
+      backdropPath?: string;
+      releaseYear?: number;
+      voteAverage?: number;
+      genres?: string[];
+      status: WatchStatus;
+      userRating?: number;
+      aspects?: AspectRatings;
+      journal?: JournalEntry;
     }
-  }
-
-  static getAll(): WatchlistItem[] {
-    return this.getStoredItems();
-  }
-
-  static getByMediaId(mediaId: string): WatchlistItem | undefined {
-    const items = this.getStoredItems();
-    return items.find((item) => item.mediaId === mediaId);
-  }
-
-  static upsert(data: {
-    mediaId: string;
-    mediaKind: MediaKind;
-    title: string;
-    posterPath: string;
-    backdropPath?: string;
-    releaseYear?: number;
-    voteAverage?: number;
-    genres?: string[];
-    status: WatchStatus;
-    userRating?: number;
-    aspects?: AspectRatings;
-    journal?: JournalEntry;
-  }): WatchlistItem {
-    const items = this.getStoredItems();
-    const existingIndex = items.findIndex((i) => i.mediaId === data.mediaId);
-    const now = new Date().toISOString();
-
-    let newItem: WatchlistItem;
-
-    if (existingIndex >= 0) {
-      newItem = {
-        ...items[existingIndex],
-        ...data,
-        updatedAt: now,
-      };
-      items[existingIndex] = newItem;
-    } else {
-      newItem = {
-        id: `w_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-        ...data,
-        createdAt: now,
-        updatedAt: now,
-      };
-      items.unshift(newItem);
-    }
-
-    this.saveStoredItems(items);
-    return newItem;
-  }
-
-  static delete(mediaId: string): boolean {
-    const items = this.getStoredItems();
-    const filtered = items.filter((i) => i.mediaId !== mediaId);
-    if (filtered.length !== items.length) {
-      this.saveStoredItems(filtered);
-      return true;
-    }
-    return false;
-  }
-
-  static subscribe(callback: (items: WatchlistItem[]) => void): () => void {
-    if (typeof window === 'undefined') return () => {};
-
-    const handler = (e: Event) => {
-      const customEvent = e as CustomEvent<WatchlistItem[]>;
-      callback(customEvent.detail || WatchlistService.getAll());
+  ): Promise<void> {
+    if (!userId) return;
+    const supabase = getSupabase();
+    
+    const payload = {
+      user_id: userId,
+      media_id: data.mediaId,
+      media_kind: data.mediaKind,
+      title: data.title,
+      poster_path: data.posterPath,
+      backdrop_path: data.backdropPath,
+      release_year: data.releaseYear,
+      vote_average: data.voteAverage,
+      genres: data.genres || [],
+      status: data.status,
+      user_rating: data.userRating,
+      aspects: data.aspects,
+      journal: data.journal,
+      updated_at: new Date().toISOString()
     };
 
-    window.addEventListener(WATCHLIST_CHANGE_EVENT, handler);
-    return () => {
-      window.removeEventListener(WATCHLIST_CHANGE_EVENT, handler);
-    };
+    const { error } = await supabase
+      .from('watchlist')
+      .upsert(payload, { onConflict: 'user_id, media_id' });
+
+    if (error) {
+      console.error('Error saving watchlist to Supabase:', error);
+      throw error;
+    }
+  }
+
+  static async delete(userId: string, mediaId: string): Promise<boolean> {
+    if (!userId) return false;
+    const supabase = getSupabase();
+
+    const { error } = await supabase
+      .from('watchlist')
+      .delete()
+      .match({ user_id: userId, media_id: mediaId });
+
+    if (error) {
+      console.error('Error deleting from Supabase:', error);
+      return false;
+    }
+    return true;
   }
 }

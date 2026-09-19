@@ -13,6 +13,7 @@ export interface Movie {
   overview: string;
   posterPath: string;
   backdropPath: string;
+  logoPath?: string;
   releaseYear: number;
   voteAverage: number;
   voteCount: number;
@@ -25,6 +26,26 @@ export interface Movie {
   mediaKind?: MediaKind;
 }
 
+export interface TvSeason {
+  id: number;
+  name: string;
+  seasonNumber: number;
+  episodeCount: number;
+  posterPath?: string;
+}
+
+export interface TvEpisode {
+  id: number;
+  name: string;
+  overview: string;
+  episodeNumber: number;
+  seasonNumber: number;
+  stillPath?: string;
+  voteAverage: number;
+  runtime?: number;
+  airDate?: string;
+}
+
 export interface MovieDetails extends Movie {
   tagline?: string;
   status?: string;
@@ -33,6 +54,7 @@ export interface MovieDetails extends Movie {
   homepage?: string;
   cast?: { id: number; name: string; character: string; profilePath: string }[];
   director?: string;
+  originalLanguage?: string;
 }
 
 export interface TvDetails extends Movie {
@@ -43,6 +65,9 @@ export interface TvDetails extends Movie {
   homepage?: string;
   cast?: { id: number; name: string; character: string; profilePath: string }[];
   creator?: string;
+  originalLanguage?: string;
+  networks?: string[];
+  seasons?: TvSeason[];
 }
 
 export interface FilterOptions {

@@ -28,6 +28,7 @@ export interface WatchlistItem {
   title: string;
   posterPath: string;
   backdropPath?: string;
+  logoPath?: string;
   releaseYear?: number;
   voteAverage?: number;
   genres?: string[];

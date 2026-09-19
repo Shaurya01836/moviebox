@@ -9,22 +9,18 @@ import { Rating } from './rating';
 import { GenreBadge } from './genre-badge';
 import { Badge } from '@/components/ui/badge';
 import { WatchlistModal } from '@/features/watchlist/components/watchlist-modal';
-import { WatchlistService } from '@/features/watchlist/services/watchlist.service';
+import { useWatchlist } from '@/features/watchlist/context/watchlist-context';
 
 interface MovieCardProps {
   movie: Movie;
+  index?: number;
 }
 
-export function MovieCard({ movie }: MovieCardProps) {
+export function MovieCard({ movie, index }: MovieCardProps) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [isLogged, setIsLogged] = React.useState<boolean>(() => Boolean(WatchlistService.getByMediaId(movie.id)));
-
-  React.useEffect(() => {
-    const unsubscribe = WatchlistService.subscribe(() => {
-      setIsLogged(Boolean(WatchlistService.getByMediaId(movie.id)));
-    });
-    return unsubscribe;
-  }, [movie.id]);
+  const { getByMediaId } = useWatchlist();
+  
+  const isLogged = Boolean(getByMediaId(movie.id));
 
   const handleOpenModal = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -37,7 +33,7 @@ export function MovieCard({ movie }: MovieCardProps) {
       <div className="group relative flex flex-col space-y-2.5 transition-all">
         {/* Poster Image Container */}
         <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`} className="relative block overflow-hidden rounded-2xl">
-          <Poster src={movie.posterPath} alt={movie.title} />
+          <Poster src={movie.posterPath} alt={movie.title} priority={index !== undefined && index < 8} />
 
           {/* Quality or Age Badge */}
           {movie.qualityBadge && (

@@ -4,7 +4,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { X, Star, Trash2, ChevronDown, ChevronUp, Sparkles, Quote, Heart, MessageSquare } from 'lucide-react';
 import { WatchStatus, AspectRatings, JournalEntry, WATCH_STATUS_CONFIG, WatchlistItem } from '../types';
-import { WatchlistService } from '../services/watchlist.service';
+import { useWatchlist } from '../context/watchlist-context';
 import { MediaKind } from '@/types/movie';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ interface WatchlistModalProps {
     title: string;
     posterPath: string;
     backdropPath?: string;
+    logoPath?: string;
     releaseYear?: number;
     voteAverage?: number;
     genres?: string[];
@@ -35,6 +36,7 @@ const EMOTION_TAGS = [
 ];
 
 export function WatchlistModal({ isOpen, onClose, media }: WatchlistModalProps) {
+  const { getByMediaId, upsert, remove } = useWatchlist();
   const [existingItem, setExistingItem] = React.useState<WatchlistItem | undefined>(undefined);
   const [prevMediaId, setPrevMediaId] = React.useState<string | null>(null);
 
@@ -66,7 +68,7 @@ export function WatchlistModal({ isOpen, onClose, media }: WatchlistModalProps) 
   // Synchronize state when media changes or opens
   if (currentMediaId !== prevMediaId && isOpen && media) {
     setPrevMediaId(currentMediaId);
-    const item = WatchlistService.getByMediaId(media.mediaId);
+    const item = getByMediaId(media.mediaId);
     setExistingItem(item);
     if (item) {
       setStatus(item.status);
@@ -83,14 +85,15 @@ export function WatchlistModal({ isOpen, onClose, media }: WatchlistModalProps) 
 
   if (!isOpen || !media) return null;
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    WatchlistService.upsert({
+    await upsert({
       mediaId: media.mediaId,
       mediaKind: media.mediaKind,
       title: media.title,
       posterPath: media.posterPath,
       backdropPath: media.backdropPath,
+      logoPath: media.logoPath,
       releaseYear: media.releaseYear,
       voteAverage: media.voteAverage,
       genres: media.genres,
@@ -102,8 +105,8 @@ export function WatchlistModal({ isOpen, onClose, media }: WatchlistModalProps) 
     onClose();
   };
 
-  const handleDelete = () => {
-    WatchlistService.delete(media.mediaId);
+  const handleDelete = async () => {
+    await remove(media.mediaId);
     onClose();
   };
 
@@ -122,7 +125,7 @@ export function WatchlistModal({ isOpen, onClose, media }: WatchlistModalProps) 
         {/* Media Preview Header */}
         <div className="flex gap-4 items-center border-b border-zinc-800 pb-5">
           <div className="relative h-24 w-16 overflow-hidden rounded-xl bg-zinc-900 border border-white/10 shrink-0">
-            <Image src={media.posterPath} alt={media.title} fill className="object-cover" />
+            <Image src={media.posterPath} alt={media.title} fill sizes="64px" className="object-cover" />
           </div>
           <div>
             <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">

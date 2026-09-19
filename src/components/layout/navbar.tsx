@@ -45,15 +45,11 @@ export function Navbar() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [pathname, router]);
 
-  const isHome = pathname === '/';
-  
-  const headerClasses = isHome
-    ? `fixed top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 py-0' 
-          : 'bg-transparent border-transparent py-2'
-      }`
-    : 'sticky top-0 z-50 w-full bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 transition-all';
+  const headerClasses = `fixed top-0 z-50 w-full transition-all duration-300 ${
+    isScrolled 
+      ? 'bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 py-0' 
+      : 'bg-transparent border-transparent py-2'
+  }`;
 
   const navItems = [
     { title: 'Home', href: '/', icon: Home },

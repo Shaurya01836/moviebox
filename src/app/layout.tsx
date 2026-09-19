@@ -6,6 +6,8 @@ import { Footer } from '@/components/layout/footer';
 import { siteConfig } from '@/lib/config/site';
 import { AuthProvider } from '@/features/auth/context/auth-context';
 
+import { WatchlistProvider } from '@/features/watchlist/context/watchlist-context';
+
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -33,9 +35,11 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark antialiased`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col bg-zinc-950 text-zinc-100 selection:bg-red-500 selection:text-white" suppressHydrationWarning>
         <AuthProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <WatchlistProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </WatchlistProvider>
         </AuthProvider>
       </body>
     </html>
