@@ -1,6 +1,16 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function Footer() {
+  const pathname = usePathname();
+
+  // Hide footer completely when playing media
+  if (pathname?.startsWith('/play')) {
+    return null;
+  }
+
   return (
     <footer className="hidden md:block border-t border-zinc-900 bg-zinc-950/90 py-6 sm:py-8 text-xs text-zinc-500">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8 text-center sm:text-left">

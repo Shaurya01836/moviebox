@@ -13,10 +13,7 @@ export default async function PlayTvPage({ params }: PlayTvPageProps) {
   const { id, season, episode } = await params;
   
   return (
-    <div className="h-screen w-screen bg-black overflow-hidden relative">
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
-        <BackButton />
-      </div>
+    <div className="h-[100dvh] w-screen bg-black overflow-hidden relative">
       <VidLinkPlayer 
         tmdbId={id} 
         type="tv" 

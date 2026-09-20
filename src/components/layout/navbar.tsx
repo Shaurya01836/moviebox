@@ -63,6 +63,11 @@ export function Navbar() {
     setIsAuthModalOpen(true);
   };
 
+  // Hide navigation entirely on video playback pages (/play/*)
+  if (pathname?.startsWith('/play')) {
+    return null;
+  }
+
   return (
     <>
       <header className={headerClasses}>
