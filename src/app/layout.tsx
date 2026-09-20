@@ -26,6 +26,9 @@ export const metadata: Metadata = {
   description: siteConfig.description,
 };
 
+import { ProfileProvider } from '@/features/profile/context/profile-context';
+import { ProfilePickerModal } from '@/features/profile/components/profile-picker-modal';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,11 +38,14 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark antialiased`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col bg-zinc-950 text-zinc-100 selection:bg-red-500 selection:text-white" suppressHydrationWarning>
         <AuthProvider>
-          <WatchlistProvider>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </WatchlistProvider>
+          <ProfileProvider>
+            <WatchlistProvider>
+              <Navbar />
+              <main className="flex-1 pb-24 md:pb-0">{children}</main>
+              <Footer />
+              <ProfilePickerModal />
+            </WatchlistProvider>
+          </ProfileProvider>
         </AuthProvider>
       </body>
     </html>

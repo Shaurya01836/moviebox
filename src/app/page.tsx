@@ -31,7 +31,6 @@ export default async function HomePage() {
           title="Trending Right Now"
           subtitle="The most watched blockbusters across the platform this week"
           movies={trendingMovies.slice(0, 12)}
-          viewAllHref="/movies?category=trending"
         />
 
         {/* Popular Movies Section */}
@@ -39,7 +38,6 @@ export default async function HomePage() {
           title="Popular Movies"
           subtitle="Top community rated films and critical favorites from TMDB"
           movies={popularMovies.slice(0, 12)}
-          viewAllHref="/movies"
         />
       </div>
     </div>

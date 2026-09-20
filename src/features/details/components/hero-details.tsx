@@ -58,10 +58,7 @@ export function HeroDetails({ media, mediaKind }: HeroDetailsProps) {
         <div className="absolute inset-0 bg-gradient-to-r from-[#10161a] via-[#10161a]/60 to-transparent lg:w-2/3" />
       </div>
 
-      {/* Top Navigation Row (Back Button & Logo) */}
-      <div className="absolute top-4 left-4 z-[60] sm:top-6 sm:left-6 lg:top-8 lg:left-10 flex items-center gap-6">
-        <BackButton />
-      </div>
+      {/* Top Navigation Spacing */}
 
       {/* Content Container */}
       <div className="relative z-10 flex min-h-[60vh] sm:min-h-[85vh] flex-col justify-center px-4 pt-20 pb-10 sm:px-8 sm:pt-24 lg:px-16 mx-auto max-w-[1600px]">

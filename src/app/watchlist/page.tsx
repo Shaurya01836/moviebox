@@ -2,9 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Plus, Search, Film, Star, CheckCircle2, Flame, Bookmark } from 'lucide-react';
+import { Plus, Search, Film, Star, CheckCircle2, Flame, Bookmark, Lock, Sparkles, UserCheck, ShieldCheck } from 'lucide-react';
 import { WatchlistItem, WatchStatus, WATCH_STATUS_CONFIG } from '@/features/watchlist/types';
 import { useWatchlist } from '@/features/watchlist/context/watchlist-context';
+import { useAuth } from '@/features/auth/context/auth-context';
+import { AuthModal } from '@/features/auth/components/auth-modal';
 import { WatchlistCard } from '@/features/watchlist/components/watchlist-card';
 import { WatchlistModal } from '@/features/watchlist/components/watchlist-modal';
 import { WatchlistHero } from '@/features/watchlist/components/watchlist-hero';
@@ -15,7 +17,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 export default function WatchlistPage() {
+  const { user } = useAuth();
   const { items, isLoading, remove } = useWatchlist();
+  const [isAuthModalOpen, setIsAuthModalOpen] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState<WatchStatus | 'all'>('all');
   const [selectedMedia, setSelectedMedia] = React.useState<'all' | 'movie' | 'tv' | 'anime'>('all');
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -30,6 +34,51 @@ export default function WatchlistPage() {
     voteAverage?: number;
     genres?: string[];
   } | null>(null);
+
+  // If user is logged out, show a clean minimal sign-in prompt
+  if (!user) {
+    return (
+      <div className="flex flex-col min-h-screen bg-zinc-950 px-4 items-center justify-center relative">
+        <div className="relative max-w-md w-full text-center space-y-6 z-10 animate-in fade-in zoom-in-95 duration-200 border border-white/10 bg-zinc-950/70 p-8 sm:p-10 rounded-3xl backdrop-blur-2xl shadow-2xl shadow-black/80">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-red-500 shadow-md">
+            <Bookmark className="h-7 w-7" />
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              My Library
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto">
+              Sign in to save movies, track TV shows, and build your personal collection.
+            </p>
+          </div>
+
+          <div className="pt-2 space-y-2.5">
+            <Button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="w-full rounded-xl bg-red-600 py-3 text-xs font-bold text-white hover:bg-red-500 transition-transform active:scale-95 shadow-lg shadow-red-950/40 border border-red-500/30 cursor-pointer"
+            >
+              Sign In / Register
+            </Button>
+            <Link href="/search" className="block">
+              <button
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                Browse Catalog
+              </button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Auth Modal */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          defaultMode="login"
+        />
+      </div>
+    );
+  }
 
   // Filter items by status, media kind, and search query
   const filteredItems = React.useMemo(() => {

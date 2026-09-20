@@ -3,109 +3,101 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Bookmark, Search, Home, Calendar, BarChart3, User, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Home, Bookmark, Search, Calendar, BarChart3, User } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/auth-context';
+import { useProfile } from '@/features/profile/context/profile-context';
+import { AVATAR_OPTIONS, getAvatarOption } from '@/features/profile/types';
 
 interface MobileNavProps {
   onOpenAuth?: (mode: 'login' | 'register') => void;
 }
 
 export function MobileNav({ onOpenAuth }: MobileNavProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
+  const { activeProfile, setIsPickerOpen } = useProfile();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     { title: 'Home', href: '/', icon: Home },
-    { title: 'My Library', href: '/watchlist', icon: Bookmark },
+    { title: 'Search', href: '/search', icon: Search },
+    { title: 'Library', href: '/watchlist', icon: Bookmark },
     { title: 'Timeline', href: '/timeline', icon: Calendar },
-    { title: 'Analytics', href: '/stats', icon: BarChart3 },
+    { title: 'Stats', href: '/stats', icon: BarChart3 },
   ];
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <div className="md:hidden">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle Menu"
-        className="text-zinc-200 hover:text-white"
-      >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </Button>
+    <div className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-zinc-950/90 backdrop-blur-2xl border-t border-white/10 px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl">
+      <nav className="flex items-center justify-around max-w-md mx-auto">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all duration-200 select-none ${
+                isActive
+                  ? 'text-red-500 font-semibold scale-105'
+                  : 'text-zinc-400 hover:text-zinc-200 active:scale-95'
+              }`}
+            >
+              <div className={`relative p-1 rounded-full transition-colors ${isActive ? 'bg-red-500/15' : ''}`}>
+                <Icon className={`h-5 w-5 ${isActive ? 'text-red-500 stroke-[2.5]' : 'text-zinc-400 stroke-2'}`} />
+                {isActive && (
+                  <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                )}
+              </div>
+              <span className="text-[10px] tracking-tight leading-none">{item.title}</span>
+            </Link>
+          );
+        })}
 
-      {isOpen && (
-        <div className="fixed inset-x-0 top-16 z-50 border-b border-zinc-800/80 bg-zinc-950/95 p-5 backdrop-blur-xl animate-in slide-in-from-top duration-200 shadow-2xl max-h-[calc(100vh-4rem)] overflow-y-auto">
-          <nav className="flex flex-col gap-3">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-red-600/15 text-red-500 font-semibold border border-red-500/20'
-                      : 'text-zinc-300 hover:text-white hover:bg-zinc-900/60'
-                  }`}
-                >
-                  <Icon className={`h-4 w-4 ${isActive ? 'text-red-500' : 'text-zinc-400'}`} />
-                  <span>{item.title}</span>
-                </Link>
-              );
-            })}
-
-            <div className="pt-3 border-t border-zinc-800/80 flex flex-col gap-3">
-              <Link href="/search" onClick={() => setIsOpen(false)}>
-                <Button variant="outline" className="w-full justify-start gap-2.5 bg-zinc-900/60 border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800">
-                  <Search className="h-4 w-4 text-zinc-400" />
-                  Search Movies & Shows...
-                </Button>
-              </Link>
-
-              {user ? (
-                <div className="flex items-center justify-between rounded-xl bg-zinc-900/80 p-3 border border-zinc-800">
-                  <div className="flex items-center gap-2.5 overflow-hidden pr-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-600/20 text-red-500 font-bold text-xs border border-red-500/30">
-                      {user.email?.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-xs font-medium text-zinc-200 truncate">
-                      {user.email}
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      signOut();
-                      setIsOpen(false);
-                    }}
-                    className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 px-2.5 shrink-0"
-                  >
-                    <LogOut className="h-3.5 w-3.5 mr-1" />
-                    Sign Out
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  onClick={() => {
-                    setIsOpen(false);
-                    onOpenAuth?.('login');
-                  }}
-                  className="w-full justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold shadow-md"
-                >
-                  <User className="h-4 w-4" />
-                  Sign In / Register
-                </Button>
-              )}
-            </div>
-          </nav>
-        </div>
-      )}
+        {/* Auth / Profile Tab */}
+        <button
+          onClick={() => {
+            if (user && activeProfile) {
+              setIsPickerOpen(true);
+            } else if (onOpenAuth) {
+              onOpenAuth('login');
+            }
+          }}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 px-2 rounded-xl transition-all duration-200 select-none text-zinc-400 hover:text-zinc-200 active:scale-95`}
+        >
+          <div className="relative flex items-center justify-center">
+            {user && activeProfile ? (
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600/80 shadow-md overflow-hidden p-0.5 border border-white/20">
+                <img
+                  src={getAvatarOption(activeProfile.avatarUrl).url}
+                  alt={activeProfile.name}
+                  className="h-full w-full object-cover rounded-full"
+                />
+              </div>
+            ) : user ? (
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white font-bold text-[10px] shadow-md">
+                {user.email?.charAt(0).toUpperCase()}
+              </div>
+            ) : (
+              <div className="p-1">
+                <User className="h-5 w-5 text-zinc-400 stroke-2" />
+              </div>
+            )}
+          </div>
+          <span className="text-[10px] tracking-tight leading-none max-w-[56px] truncate">
+            {user && activeProfile ? activeProfile.name : user ? 'Profile' : 'Sign In'}
+          </span>
+        </button>
+      </nav>
     </div>
   );
 }
+
 
