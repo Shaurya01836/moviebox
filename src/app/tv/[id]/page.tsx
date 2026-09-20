@@ -32,7 +32,7 @@ export default async function TvPage({ params }: TvPageProps) {
       
       {validSeasons.length > 0 && (
         <>
-          <TvEpisodes seasons={validSeasons} allEpisodes={allEpisodes} fallbackImage={tvShow.backdropPath} />
+          <TvEpisodes tmdbId={id} seasons={validSeasons} allEpisodes={allEpisodes} fallbackImage={tvShow.backdropPath} />
           <EpisodeHeatmap seasons={validSeasons} allEpisodes={allEpisodes} />
         </>
       )}

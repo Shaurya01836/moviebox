@@ -107,7 +107,7 @@ export default function WatchlistPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-950 pb-20">
+    <div className="flex flex-col min-h-screen bg-[#10161a] pb-20">
       
       {/* Dynamic Hero Section - Always placed at the very top slot */}
       {isLoading ? (

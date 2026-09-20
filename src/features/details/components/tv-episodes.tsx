@@ -2,16 +2,18 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { Eye, ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { Eye, ChevronDown, Play } from 'lucide-react';
 import { TvSeason, TvEpisode } from '@/types/movie';
 
 interface TvEpisodesProps {
+  tmdbId: string | number;
   seasons: TvSeason[];
   allEpisodes: TvEpisode[];
   fallbackImage?: string;
 }
 
-export function TvEpisodes({ seasons, allEpisodes, fallbackImage }: TvEpisodesProps) {
+export function TvEpisodes({ tmdbId, seasons, allEpisodes, fallbackImage }: TvEpisodesProps) {
   const validSeasons = seasons.filter((s) => s.seasonNumber > 0 && s.episodeCount > 0);
   const [activeSeason, setActiveSeason] = React.useState<number>(validSeasons[0]?.seasonNumber || 1);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
@@ -109,7 +111,18 @@ export function TvEpisodes({ seasons, allEpisodes, fallbackImage }: TvEpisodesPr
                   </div>
                 )}
                 
-                <button className="absolute top-2 right-2 p-1.5 rounded-full bg-black/40 hover:bg-black/80 border border-white/10 text-white backdrop-blur-md transition-colors opacity-0 group-hover:opacity-100">
+                {/* Play Button Overlay */}
+                <Link 
+                  href={`/play/tv/${tmdbId}/${activeSeason}/${ep.episodeNumber}`}
+                  className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/20 text-white backdrop-blur-[2px] transition-all opacity-0 group-hover:opacity-100 cursor-pointer z-10"
+                >
+                  <div className="p-3 sm:p-4 rounded-full bg-red-600 shadow-xl border border-red-500/50 transform group-hover:scale-110 transition-transform">
+                    <Play className="w-6 h-6 sm:w-8 sm:h-8 fill-current" />
+                  </div>
+                </Link>
+                
+                {/* Secondary Actions */}
+                <button className="absolute top-2 right-2 p-1.5 rounded-full bg-black/40 hover:bg-black/80 border border-white/10 text-white backdrop-blur-md transition-colors opacity-0 group-hover:opacity-100 z-20">
                   <Eye className="w-3.5 h-3.5" />
                 </button>
               </div>

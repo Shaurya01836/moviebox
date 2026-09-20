@@ -94,10 +94,13 @@ export function HeroDetails({ media, mediaKind }: HeroDetailsProps) {
 
             {/* Action Buttons Row */}
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 pt-1 sm:pt-2">
-              <button className="flex items-center gap-2 rounded-full bg-white px-5 sm:px-8 py-2.5 sm:py-3.5 text-xs sm:text-base font-bold text-zinc-950 transition-all hover:bg-zinc-200 hover:scale-105 active:scale-95 shadow-xl shadow-white/10 cursor-pointer select-none">
+              <Link 
+                href={mediaKind === 'tv' ? `/play/tv/${media.id}/1/1` : `/play/movie/${media.id}`}
+                className="flex items-center gap-2 rounded-full bg-white px-5 sm:px-8 py-2.5 sm:py-3.5 text-xs sm:text-base font-bold text-zinc-950 transition-all hover:bg-zinc-200 hover:scale-105 active:scale-95 shadow-xl shadow-white/10 cursor-pointer select-none"
+              >
                 <Play className="h-4 w-4 sm:h-5 sm:w-5 fill-zinc-950 text-zinc-950" />
                 Play
-              </button>
+              </Link>
               
               <WatchlistActionButton media={media} mediaKind={mediaKind} />
             </div>

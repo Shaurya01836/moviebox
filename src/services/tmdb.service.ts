@@ -3,6 +3,22 @@ import { Movie, MovieDetails, TvDetails, TvEpisode, TvSeason } from '@/types/mov
 import { RawTmdbMediaItem, RawTmdbSearchResponse, SearchResponse, SearchResultItem } from '@/features/search/types';
 
 export class TmdbService {
+  private static async fetchWithRetry(url: string, options: RequestInit = {}, retries = 3): Promise<Response> {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await fetch(url, options);
+      } catch (error: any) {
+        const isEconnReset = error?.cause?.code === 'ECONNRESET' || error?.code === 'ECONNRESET' || error?.message?.includes('ECONNRESET');
+        if (isEconnReset && i < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300 * (i + 1)));
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw new Error('Fetch failed after retries');
+  }
+
   private static getPosterUrl(path?: string | null): string {
     if (!path) {
       return 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800&auto=format&fit=crop';
@@ -47,7 +63,7 @@ export class TmdbService {
         const type = movie.mediaKind === 'tv' ? 'tv' : 'movie';
         const url = `${env.tmdb.baseUrl}/${type}/${movie.id}/images?api_key=${apiKey}&include_image_language=en,null`;
         
-        const res = await fetch(url, { next: { revalidate: 3600 } });
+        const res = await this.fetchWithRetry(url, { next: { revalidate: 3600 } });
         if (!res.ok) return movie;
         
         const data = await res.json();
@@ -72,7 +88,7 @@ export class TmdbService {
     const url = `${env.tmdb.baseUrl}/trending/movie/week?api_key=${apiKey}&page=${page}`;
 
     try {
-      const res = await fetch(url, { next: { revalidate: 3600 } });
+      const res = await this.fetchWithRetry(url, { next: { revalidate: 3600 } });
       if (!res.ok) return [];
 
       const data: RawTmdbSearchResponse = await res.json();
@@ -91,7 +107,7 @@ export class TmdbService {
     const url = `${env.tmdb.baseUrl}/movie/popular?api_key=${apiKey}&page=${page}`;
 
     try {
-      const res = await fetch(url, { next: { revalidate: 3600 } });
+      const res = await this.fetchWithRetry(url, { next: { revalidate: 3600 } });
       if (!res.ok) return [];
 
       const data: RawTmdbSearchResponse = await res.json();
@@ -120,7 +136,7 @@ export class TmdbService {
     const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
     const url = `${env.tmdb.baseUrl}/search/multi?api_key=${apiKey}&query=${encodeURIComponent(trimmedQuery)}&page=${page}`;
 
-    const res = await fetch(url, {
+    const res = await this.fetchWithRetry(url, {
       next: { revalidate: 300 },
     });
 
@@ -157,7 +173,7 @@ export class TmdbService {
     const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
     const url = `${env.tmdb.baseUrl}/movie/${id}?api_key=${apiKey}&append_to_response=credits,images&include_image_language=en,null`;
 
-    const res = await fetch(url, {
+    const res = await this.fetchWithRetry(url, {
       next: { revalidate: 3600 },
     });
 
@@ -212,7 +228,7 @@ export class TmdbService {
     const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
     const url = `${env.tmdb.baseUrl}/tv/${id}?api_key=${apiKey}&append_to_response=credits,images&include_image_language=en,null`;
 
-    const res = await fetch(url, {
+    const res = await this.fetchWithRetry(url, {
       next: { revalidate: 3600 },
     });
 
@@ -279,7 +295,7 @@ export class TmdbService {
     const url = `${env.tmdb.baseUrl}/tv/${tvId}/season/${seasonNumber}?api_key=${apiKey}`;
 
     try {
-      const res = await fetch(url, { next: { revalidate: 3600 } });
+      const res = await this.fetchWithRetry(url, { next: { revalidate: 3600 } });
       if (!res.ok) return [];
 
       const data = await res.json();
@@ -316,6 +332,11 @@ export class TmdbService {
         const promises = batch.map(s => this.getTvSeasonDetails(tvId, s.seasonNumber));
         const batchResults = await Promise.all(promises);
         results.push(...batchResults);
+        
+        // Add a small delay between batches to prevent TMDB from dropping connections
+        if (i + batchSize < validSeasons.length) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
       }
       return results.flat();
     } catch (err) {

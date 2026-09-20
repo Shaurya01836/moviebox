@@ -15,7 +15,7 @@ interface WatchlistHeroProps {
 
 export function WatchlistHero({ items, onOpenItem }: WatchlistHeroProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [dynamicLogos, setDynamicLogos] = useState<Record<string, string>>({});
+  const [dynamicLogos, setDynamicLogos] = useState<Record<string, string | null>>({});
 
   // Auto-cycle logic
   useEffect(() => {
@@ -44,24 +44,23 @@ export function WatchlistHero({ items, onOpenItem }: WatchlistHeroProps) {
 
   // Dynamically fetch missing logos for older items in the local watchlist
   useEffect(() => {
-    if (!currentItem || currentItem.logoPath || dynamicLogos[currentItem.mediaId]) return;
+    if (!currentItem || currentItem.logoPath || dynamicLogos[currentItem.mediaId] !== undefined) return;
     
     getLogoPathAction(currentItem.mediaId, currentItem.mediaKind).then(path => {
-      if (path) {
-        setDynamicLogos(prev => ({ ...prev, [currentItem.mediaId]: path }));
-      }
+      setDynamicLogos(prev => ({ ...prev, [currentItem.mediaId]: path || null }));
     });
   }, [currentItem, dynamicLogos]);
 
   const activeLogo = currentItem.logoPath || dynamicLogos[currentItem.mediaId];
 
   return (
-    <section className="relative w-full overflow-hidden bg-zinc-950 min-h-[70vh] lg:min-h-[80vh]">
+    <section className="relative w-full overflow-hidden bg-[#10161a] min-h-[70vh] lg:min-h-[80vh]">
       {/* Background Slides */}
+      <div className="absolute inset-0 z-0 bg-[#10161a]">
       {items.map((item, index) => (
         <div
           key={item.mediaId}
-          className={`absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out ${
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
             index === activeIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
@@ -75,14 +74,15 @@ export function WatchlistHero({ items, onOpenItem }: WatchlistHeroProps) {
               sizes="100vw"
             />
           ) : (
-            <div className="w-full h-full bg-zinc-900" />
+            <div className="w-full h-full bg-[#10161a]" />
           )}
         </div>
       ))}
 
       {/* Cinematic Vignette Overlay Gradients */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/40 to-transparent pointer-events-none" />
-      <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/60 to-transparent lg:w-3/4 pointer-events-none" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#10161a] via-[#10161a]/60 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#10161a]/90 via-[#10161a]/40 to-transparent pointer-events-none" />
+      </div>
 
       {/* Content Container */}
       <div className="relative z-10 flex h-full min-h-[70vh] lg:min-h-[80vh] flex-col justify-end px-6 sm:px-10 lg:px-16 pb-20 pt-32 mx-auto max-w-7xl w-full">
@@ -114,10 +114,12 @@ export function WatchlistHero({ items, onOpenItem }: WatchlistHeroProps) {
                 sizes="(max-width: 768px) 250px, 350px"
               />
             </div>
-          ) : (
+          ) : activeLogo === null ? (
             <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl lg:text-5xl uppercase drop-shadow-xl" style={{ letterSpacing: '0.05em' }}>
               {currentItem.title}
             </h1>
+          ) : (
+            <div className="h-16 w-40 sm:h-20 sm:w-56 md:h-28 md:w-72 lg:h-32 lg:w-[350px] mb-2 rounded-xl bg-white/5 animate-pulse" />
           )}
 
           <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-zinc-300 drop-shadow-md">

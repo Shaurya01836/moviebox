@@ -2,10 +2,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function WatchlistHeroSkeleton() {
   return (
-    <section className="relative w-full overflow-hidden bg-zinc-950 min-h-[50vh] sm:min-h-[60vh] lg:min-h-[70vh]">
+    <section className="relative w-full overflow-hidden bg-[#10161a] min-h-[50vh] sm:min-h-[60vh] lg:min-h-[70vh]">
       {/* Background Mock */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-900/40 to-zinc-950 animate-pulse" />
-      <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/60 to-transparent lg:w-3/4 pointer-events-none" />
+      <div className="absolute inset-0 z-0 bg-[#10161a]">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#10161a] via-[#10161a]/60 to-[#10161a]/40 animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#10161a]/90 via-[#10161a]/40 to-transparent pointer-events-none" />
+      </div>
 
       {/* Content Container */}
       <div className="relative z-10 flex min-h-[50vh] sm:min-h-[60vh] lg:min-h-[70vh] flex-col justify-end px-4 sm:px-10 lg:px-16 pb-12 sm:pb-16 pt-24 sm:pt-32 mx-auto max-w-7xl w-full">
