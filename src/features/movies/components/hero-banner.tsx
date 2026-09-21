@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Play, Plus, Info, Star, Calendar, Film } from 'lucide-react';
+import { Play, Plus, Info, Star, Calendar, Film, Check } from 'lucide-react';
 import { Movie } from '@/types/movie';
+import { WatchlistModal } from '@/features/watchlist/components/watchlist-modal';
+import { useWatchlist } from '@/features/watchlist/context/watchlist-context';
 
 interface HeroBannerProps {
   movies: Movie[];
@@ -12,6 +14,8 @@ interface HeroBannerProps {
 
 export function HeroBanner({ movies }: HeroBannerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [modalPosition, setModalPosition] = useState<{ x: number; y: number; align?: 'top' | 'bottom' } | null>(null);
+  const { getByMediaId } = useWatchlist();
 
   useEffect(() => {
     if (!movies || movies.length <= 1) return;
@@ -27,6 +31,7 @@ export function HeroBanner({ movies }: HeroBannerProps) {
 
   const currentMovie = movies[activeIndex];
   const genreText = currentMovie.genres.length > 0 ? currentMovie.genres.join(', ') : 'Action';
+  const isLogged = Boolean(getByMediaId(currentMovie.id));
 
   return (
     <section className="relative w-full overflow-hidden bg-zinc-950">
@@ -103,7 +108,7 @@ export function HeroBanner({ movies }: HeroBannerProps) {
           {/* Action Button Row */}
           <div className="flex items-center gap-2.5 sm:gap-4 pt-2 sm:pt-4">
             {/* White Solid Play Button */}
-            <Link href={`/${currentMovie.mediaKind === 'tv' ? 'tv' : 'movies'}/${currentMovie.id}`}>
+            <Link href={`/play/${currentMovie.mediaKind === 'tv' ? 'tv' : 'movie'}/${currentMovie.id}${currentMovie.mediaKind === 'tv' ? '/1/1' : ''}`}>
               <button
                 type="button"
                 className="flex items-center gap-2 rounded-full bg-white px-5 sm:px-8 py-2.5 sm:py-3.5 text-xs sm:text-sm font-bold text-zinc-950 hover:bg-zinc-200 transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer select-none"
@@ -116,10 +121,22 @@ export function HeroBanner({ movies }: HeroBannerProps) {
             {/* Circular Glassmorphic Add Button */}
             <button
               type="button"
-              className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/20 bg-white/15 backdrop-blur-md text-white hover:bg-white/30 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md"
+              onClick={(e) => {
+                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                setModalPosition({
+                  x: rect.left,
+                  y: rect.top - 8,
+                  align: 'bottom'
+                });
+              }}
+              className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md ${
+                isLogged
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/30'
+                  : 'bg-white/15 text-white border-white/20 hover:bg-white/30 backdrop-blur-md'
+              }`}
               title="Add to Watchlist"
             >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              {isLogged ? <Check className="h-4 w-4 sm:h-5 sm:w-5" /> : <Plus className="h-4 w-4 sm:h-5 sm:w-5" />}
             </button>
 
             {/* Circular Glassmorphic Details Button */}
@@ -151,6 +168,24 @@ export function HeroBanner({ movies }: HeroBannerProps) {
           ))}
         </div>
       </div>
+
+      {/* Watchlist Modal Editor */}
+      <WatchlistModal
+        isOpen={Boolean(modalPosition)}
+        onClose={() => setModalPosition(null)}
+        position={modalPosition}
+        media={currentMovie ? {
+          mediaId: currentMovie.id,
+          mediaKind: currentMovie.mediaKind === 'tv' ? 'tv' : 'movie',
+          title: currentMovie.title,
+          posterPath: currentMovie.posterPath,
+          backdropPath: currentMovie.backdropPath,
+          logoPath: currentMovie.logoPath,
+          releaseYear: currentMovie.releaseYear,
+          voteAverage: currentMovie.voteAverage,
+          genres: currentMovie.genres,
+        } : null}
+      />
     </section>
   );
 }

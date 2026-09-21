@@ -53,18 +53,14 @@ export function VidLinkPlayer({
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  const baseUrl = 'https://vidlink.pro';
-  const urlPath = type === 'movie' ? `/movie/${tmdbId}` : `/tv/${tmdbId}/${season}/${episode}`;
-
-  const queryParams = new URLSearchParams({
-    autoplay: 'false',
-  });
+  const baseUrl = 'https://vidsrc.me/embed';
+  let urlPath = type === 'movie' ? `/movie?tmdb=${tmdbId}` : `/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`;
 
   if (startAt > 0) {
-    queryParams.append('startAt', startAt.toString());
+    urlPath += `&startAt=${startAt}`;
   }
 
-  const iframeSrc = queryParams.toString() ? `${baseUrl}${urlPath}?${queryParams.toString()}` : `${baseUrl}${urlPath}`;
+  const iframeSrc = `${baseUrl}${urlPath}`;
 
   return (
     <div 

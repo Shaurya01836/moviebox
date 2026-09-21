@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Check, Trash2 } from 'lucide-react';
 import { useWatchlist } from '../context/watchlist-context';
 import { MediaKind } from '@/types/movie';
@@ -8,7 +9,7 @@ import { MediaKind } from '@/types/movie';
 interface WatchlistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  popover?: boolean;
+  position?: { x: number; y: number; align?: 'top' | 'bottom' } | null;
   media: {
     mediaId: string;
     mediaKind: MediaKind;
@@ -22,24 +23,37 @@ interface WatchlistModalProps {
   } | null;
 }
 
-export function WatchlistModal({ isOpen, onClose, media, popover = true }: WatchlistModalProps) {
+export function WatchlistModal({ isOpen, onClose, media, position = null }: WatchlistModalProps) {
   const { getByMediaId, upsert, remove } = useWatchlist();
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or scrolling
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
+    const handleScroll = () => {
+      if (position) onClose(); // Only close on scroll if it's a dropdown
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, { passive: true });
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isOpen, onClose, position]);
 
-  if (!isOpen || !media) return null;
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !media || !mounted) return null;
 
   const existingItem = getByMediaId(media.mediaId);
   const isSaved = Boolean(existingItem);
@@ -67,11 +81,7 @@ export function WatchlistModal({ isOpen, onClose, media, popover = true }: Watch
   const cardContent = (
     <div
       ref={dropdownRef}
-      className={`${
-        popover
-          ? 'absolute top-full left-0 mt-2 z-[100] w-72 sm:w-80 animate-in zoom-in-95 duration-150'
-          : 'relative w-full max-w-xs animate-in zoom-in-95 duration-150'
-      } rounded-2xl border border-white/15 bg-zinc-950/90 p-3 shadow-2xl backdrop-blur-2xl shadow-black/90 space-y-2`}
+      className={`rounded-2xl border border-white/15 bg-zinc-950/90 p-3 shadow-2xl backdrop-blur-2xl shadow-black/90 space-y-2 ${position ? 'w-72 sm:w-80' : 'relative w-full max-w-xs animate-in zoom-in-95 duration-150'}`}
     >
       {/* Dropdown Header */}
       <div className="flex items-center justify-between px-2 py-1 border-b border-white/10">
@@ -129,13 +139,31 @@ export function WatchlistModal({ isOpen, onClose, media, popover = true }: Watch
     </div>
   );
 
-  if (popover) {
-    return cardContent;
+  if (position) {
+    const isBottomAligned = position.align === 'bottom';
+    
+    const dropdownNode = (
+      <div 
+        className="fixed z-[200] animate-in zoom-in-95 duration-150"
+        style={{ 
+          top: isBottomAligned ? undefined : position.y,
+          bottom: isBottomAligned ? `calc(100vh - ${position.y}px)` : undefined,
+          left: position.x,
+          transform: `translateX(calc(min(0px, 100vw - 100% - ${position.x}px - 16px)))`
+        }}
+      >
+        {cardContent}
+      </div>
+    );
+    
+    return typeof document !== 'undefined' ? createPortal(dropdownNode, document.body) : dropdownNode;
   }
 
-  return (
+  const modalNode = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
       {cardContent}
     </div>
   );
+  
+  return typeof document !== 'undefined' ? createPortal(modalNode, document.body) : modalNode;
 }

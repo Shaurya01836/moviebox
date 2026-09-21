@@ -12,7 +12,7 @@ interface WatchlistActionButtonProps {
 }
 
 export function WatchlistActionButton({ media, mediaKind }: WatchlistActionButtonProps) {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [modalPosition, setModalPosition] = React.useState<{ x: number; y: number } | null>(null);
   const { getByMediaId } = useWatchlist();
   
   const isLogged = Boolean(getByMediaId(media.id));
@@ -20,7 +20,11 @@ export function WatchlistActionButton({ media, mediaKind }: WatchlistActionButto
   return (
     <div className="relative inline-block">
       <button
-        onClick={() => setIsModalOpen(!isModalOpen)}
+        type="button"
+        onClick={(e) => {
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          setModalPosition({ x: rect.left, y: rect.bottom + 8 });
+        }}
         className={`flex items-center gap-2 rounded-full px-5 sm:px-8 py-2.5 sm:py-3.5 text-xs sm:text-base font-bold transition-all shadow-lg backdrop-blur-md hover:scale-105 active:scale-95 cursor-pointer select-none shrink-0 ${
           isLogged
             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30'
@@ -41,9 +45,9 @@ export function WatchlistActionButton({ media, mediaKind }: WatchlistActionButto
       </button>
 
       <WatchlistModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        popover
+        isOpen={Boolean(modalPosition)}
+        onClose={() => setModalPosition(null)}
+        position={modalPosition}
         media={{
           mediaId: media.id,
           mediaKind,

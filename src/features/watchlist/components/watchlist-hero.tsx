@@ -141,13 +141,13 @@ export function WatchlistHero({ items, onOpenItem }: WatchlistHeroProps) {
           )}
 
           <div className="flex flex-wrap items-center gap-4 pt-4">
-            <button
-              onClick={() => onOpenItem(currentItem)}
+            <Link
+              href={`/play/${currentItem.mediaKind === 'tv' ? 'tv' : 'movie'}/${currentItem.mediaId}${currentItem.mediaKind === 'tv' ? '/1/1' : ''}`}
               className="flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-bold text-zinc-950 transition-all hover:bg-zinc-200 hover:scale-105 active:scale-95 shadow-xl shadow-white/10"
             >
               <Play className="h-4 w-4 fill-zinc-950 text-zinc-950" />
               {currentItem.status === 'watching' ? 'Resume' : 'Watch Now'}
-            </button>
+            </Link>
             <Link
               href={`/${currentItem.mediaKind === 'movie' ? 'movies' : 'tv'}/${currentItem.mediaId}`}
               className="flex items-center gap-2 rounded-full bg-zinc-800/80 border border-zinc-700/60 px-8 py-3.5 text-sm font-bold text-white transition-all hover:bg-zinc-700 hover:scale-105 active:scale-95 backdrop-blur-md shadow-xl"

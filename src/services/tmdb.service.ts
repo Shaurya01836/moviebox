@@ -119,6 +119,44 @@ export class TmdbService {
   }
 
   /**
+   * Fetch Genres from TMDB
+   */
+  static async getMovieGenres(): Promise<{ id: number; name: string }[]> {
+    const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
+    const url = `${env.tmdb.baseUrl}/genre/movie/list?api_key=${apiKey}`;
+
+    try {
+      const res = await this.fetchWithRetry(url, { next: { revalidate: 86400 } });
+      if (!res.ok) return [];
+
+      const data = await res.json();
+      return data.genres || [];
+    } catch (err) {
+      console.error('Error fetching TMDB genres:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch Movies by Genre ID from TMDB
+   */
+  static async getMoviesByGenre(genreId: string, page = 1): Promise<Movie[]> {
+    const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
+    const url = `${env.tmdb.baseUrl}/discover/movie?api_key=${apiKey}&with_genres=${genreId}&page=${page}&sort_by=popularity.desc`;
+
+    try {
+      const res = await this.fetchWithRetry(url, { next: { revalidate: 3600 } });
+      if (!res.ok) return [];
+
+      const data: RawTmdbSearchResponse = await res.json();
+      return (data.results || []).map((item) => this.mapTmdbItemToMovie({ ...item, media_type: 'movie' }));
+    } catch (err) {
+      console.error(`Error fetching TMDB movies for genre ${genreId}:`, err);
+      return [];
+    }
+  }
+
+  /**
    * Search multi-media (Movies & TV Shows) from TMDB
    */
   static async searchMulti(query: string, page = 1): Promise<SearchResponse> {
@@ -134,7 +172,26 @@ export class TmdbService {
     }
 
     const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
-    const url = `${env.tmdb.baseUrl}/search/multi?api_key=${apiKey}&query=${encodeURIComponent(trimmedQuery)}&page=${page}`;
+    
+    // Feature: Intercept Genre Searches (e.g. "Thriller")
+    const GENRE_MAP: Record<string, number> = {
+      'action': 28, 'adventure': 12, 'animation': 16, 'comedy': 35, 
+      'crime': 80, 'documentary': 99, 'drama': 18, 'family': 10751, 
+      'fantasy': 14, 'history': 36, 'horror': 27, 'music': 10402, 
+      'mystery': 9648, 'romance': 10749, 'science fiction': 878, 
+      'sci-fi': 878, 'scifi': 878, 'tv movie': 10770, 'thriller': 53, 
+      'war': 10752, 'western': 37
+    };
+    
+    const matchedGenreId = GENRE_MAP[trimmedQuery.toLowerCase()];
+    
+    let url = '';
+    if (matchedGenreId) {
+      // If the user typed a genre, fetch top movies for that genre instead of a text search
+      url = `${env.tmdb.baseUrl}/discover/movie?api_key=${apiKey}&with_genres=${matchedGenreId}&page=${page}&sort_by=popularity.desc`;
+    } else {
+      url = `${env.tmdb.baseUrl}/search/multi?api_key=${apiKey}&query=${encodeURIComponent(trimmedQuery)}&page=${page}`;
+    }
 
     const res = await this.fetchWithRetry(url, {
       next: { revalidate: 300 },
@@ -148,21 +205,23 @@ export class TmdbService {
 
     const data: RawTmdbSearchResponse = await res.json();
 
+    const isDiscover = Boolean(matchedGenreId);
+
     const filteredResults = (data.results || []).filter(
-      (item) => item.media_type === 'movie' || item.media_type === 'tv'
+      (item) => isDiscover || item.media_type === 'movie' || item.media_type === 'tv'
     );
 
     const transformedResults: SearchResultItem[] = filteredResults.map((item) => {
-      const movie = this.mapTmdbItemToMovie(item);
+      const movie = this.mapTmdbItemToMovie({ ...item, media_type: isDiscover ? 'movie' : item.media_type });
       return {
         ...movie,
-        mediaKind: item.media_type === 'tv' ? 'tv' : 'movie',
+        mediaKind: isDiscover ? 'movie' : (item.media_type === 'tv' ? 'tv' : 'movie'),
       };
     });
 
     return {
       query: trimmedQuery,
-      results: transformedResults,
+      results: transformedResults.sort((a, b) => b.voteAverage - a.voteAverage), // Sort by rating
       totalResults: data.total_results || 0,
       page: data.page || 1,
       totalPages: data.total_pages || 0,

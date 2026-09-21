@@ -17,7 +17,7 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, index }: MovieCardProps) {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [modalPosition, setModalPosition] = React.useState<{ x: number; y: number } | null>(null);
   const { getByMediaId } = useWatchlist();
   
   const isLogged = Boolean(getByMediaId(movie.id));
@@ -25,19 +25,25 @@ export function MovieCard({ movie, index }: MovieCardProps) {
   const handleOpenModal = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsModalOpen(true);
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setModalPosition({
+      x: rect.left,
+      y: rect.bottom + 8, // 8px below the button
+    });
   };
 
   return (
     <>
       <div className="group relative flex flex-col space-y-2.5 transition-all">
-        {/* Poster Image Container */}
-        <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`} className="relative block overflow-hidden rounded-2xl">
-          <Poster src={movie.posterPath} alt={movie.title} priority={index !== undefined && index < 8} />
+        <div className="relative overflow-hidden rounded-2xl group">
+          {/* Base link for the poster */}
+          <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`} className="block">
+            <Poster src={movie.posterPath} alt={movie.title} priority={index !== undefined && index < 8} />
+          </Link>
 
           {/* Quality or Age Badge */}
           {movie.qualityBadge && (
-            <div className="absolute top-3 left-3 z-10">
+            <div className="absolute top-3 left-3 z-10 pointer-events-none">
               <Badge variant="glass" className="bg-black/60 backdrop-blur-md border-white/20 text-[10px]">
                 {movie.qualityBadge}
               </Badge>
@@ -45,14 +51,17 @@ export function MovieCard({ movie, index }: MovieCardProps) {
           )}
 
           {/* Hover Action Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center gap-3 bg-zinc-950/60 opacity-0 backdrop-blur-xs transition-all duration-300 group-hover:opacity-100">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-600/40 transition-transform group-hover:scale-110">
+          <div className="absolute inset-0 flex items-center justify-center gap-3 bg-zinc-950/60 opacity-0 backdrop-blur-xs transition-all duration-300 group-hover:opacity-100 pointer-events-none">
+            <Link 
+              href={`/play/${movie.mediaKind === 'tv' ? 'tv' : 'movie'}/${movie.id}${movie.mediaKind === 'tv' ? '/1/1' : ''}`}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-600/40 transition-transform hover:scale-110 pointer-events-auto cursor-pointer"
+            >
               <Play className="h-5 w-5 fill-white ml-0.5" />
-            </div>
+            </Link>
             <button
               type="button"
               onClick={handleOpenModal}
-              className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors cursor-pointer ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors cursor-pointer pointer-events-auto hover:scale-110 ${
                 isLogged
                   ? 'bg-emerald-500 text-white border-emerald-400'
                   : 'bg-zinc-800/80 text-white border-zinc-700/60 hover:bg-zinc-700'
@@ -62,7 +71,7 @@ export function MovieCard({ movie, index }: MovieCardProps) {
               {isLogged ? <Check className="h-4 w-4 font-bold" /> : <Plus className="h-4 w-4" />}
             </button>
           </div>
-        </Link>
+        </div>
 
         {/* Details */}
         <div className="space-y-1">
@@ -88,8 +97,9 @@ export function MovieCard({ movie, index }: MovieCardProps) {
 
       {/* Watchlist Modal Editor */}
       <WatchlistModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={Boolean(modalPosition)}
+        onClose={() => setModalPosition(null)}
+        position={modalPosition}
         media={{
           mediaId: movie.id,
           mediaKind: movie.mediaKind === 'tv' ? 'tv' : 'movie',
