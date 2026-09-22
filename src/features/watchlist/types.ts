@@ -1,5 +1,13 @@
 import { MediaKind } from '@/types/movie';
 
+export interface Person {
+  id: string; // Stored as string to match our mediaId pattern, even if TMDB uses number
+  name: string;
+  roleType: 'actor' | 'character';
+  profilePath?: string;
+}
+
+
 export type WatchStatus = 'watching' | 'watched' | 'watchlist' | 'paused' | 'dropped';
 
 export interface AspectRatings {
@@ -34,9 +42,13 @@ export interface WatchlistItem {
   genres?: string[];
 
   status: WatchStatus;
-  userRating?: number; // 1-10 overall
+  userRating?: number; // 0.0-10.0 overall
   aspects?: AspectRatings;
   journal?: JournalEntry;
+
+  moods?: string[];
+  favoriteCharacters?: Person[];
+  favoriteActors?: Person[];
 
   createdAt: string;
   updatedAt: string;

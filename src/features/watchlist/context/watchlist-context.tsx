@@ -11,7 +11,7 @@ interface WatchlistContextType {
   isLoading: boolean;
   error: Error | null;
   getByMediaId: (mediaId: string | number) => WatchlistItem | undefined;
-  upsert: (data: any) => Promise<void>;
+  upsert: (data: Partial<WatchlistItem> & { mediaId: string }) => Promise<void>;
   remove: (mediaId: string | number) => Promise<void>;
 }
 
@@ -30,7 +30,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     fetchItems();
   }, [user]);
 
-  const fetchItems = async () => {
+  async function fetchItems() {
     try {
       setIsLoading(true);
       const currentUserId = user?.id || getAnonymousId();
@@ -54,13 +54,13 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     }
-  };
+  }
 
   const getByMediaId = (mediaId: string | number) => {
     return items.find(item => String(item.mediaId) === String(mediaId));
   };
 
-  const upsert = async (data: any) => {
+  const upsert = async (data: Partial<WatchlistItem> & { mediaId: string }) => {
     try {
       const userId = user?.id || getAnonymousId();
       if (!userId) return;

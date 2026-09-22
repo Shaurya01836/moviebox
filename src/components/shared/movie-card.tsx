@@ -14,9 +14,10 @@ import { useWatchlist } from '@/features/watchlist/context/watchlist-context';
 interface MovieCardProps {
   movie: Movie;
   index?: number;
+  isPersonalCollection?: boolean;
 }
 
-export function MovieCard({ movie, index }: MovieCardProps) {
+export function MovieCard({ movie, index, isPersonalCollection }: MovieCardProps) {
   const [modalPosition, setModalPosition] = React.useState<{ x: number; y: number } | null>(null);
   const { getByMediaId } = useWatchlist();
   
@@ -32,12 +33,16 @@ export function MovieCard({ movie, index }: MovieCardProps) {
     });
   };
 
+  const targetHref = isPersonalCollection
+    ? `/collections/title/${movie.id}`
+    : `/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`;
+
   return (
     <>
       <div className="group relative flex flex-col space-y-2.5 transition-all">
         <div className="relative overflow-hidden rounded-2xl group">
           {/* Base link for the poster */}
-          <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`} className="block">
+          <Link href={targetHref} className="block">
             <Poster src={movie.posterPath} alt={movie.title} priority={index !== undefined && index < 8} />
           </Link>
 
@@ -51,26 +56,28 @@ export function MovieCard({ movie, index }: MovieCardProps) {
           )}
 
           {/* Hover Action Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center gap-3 bg-zinc-950/60 opacity-0 backdrop-blur-xs transition-all duration-300 group-hover:opacity-100 pointer-events-none">
-            <Link 
-              href={`/play/${movie.mediaKind === 'tv' ? 'tv' : 'movie'}/${movie.id}${movie.mediaKind === 'tv' ? '/1/1' : ''}`}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-600/40 transition-transform hover:scale-110 pointer-events-auto cursor-pointer"
-            >
-              <Play className="h-5 w-5 fill-white ml-0.5" />
-            </Link>
-            <button
-              type="button"
-              onClick={handleOpenModal}
-              className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors cursor-pointer pointer-events-auto hover:scale-110 ${
-                isLogged
-                  ? 'bg-emerald-500 text-white border-emerald-400'
-                  : 'bg-zinc-800/80 text-white border-zinc-700/60 hover:bg-zinc-700'
-              }`}
-              title={isLogged ? 'Edit in My List' : 'Add to My List'}
-            >
-              {isLogged ? <Check className="h-4 w-4 font-bold" /> : <Plus className="h-4 w-4" />}
-            </button>
-          </div>
+          {!isPersonalCollection && (
+            <div className="absolute inset-0 flex items-center justify-center gap-3 bg-zinc-950/60 opacity-0 backdrop-blur-xs transition-all duration-300 group-hover:opacity-100 pointer-events-none">
+              <Link 
+                href={`/play/${movie.mediaKind === 'tv' ? 'tv' : 'movie'}/${movie.id}${movie.mediaKind === 'tv' ? '/1/1' : ''}`}
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-600/40 transition-transform hover:scale-110 pointer-events-auto cursor-pointer"
+              >
+                <Play className="h-5 w-5 fill-white ml-0.5" />
+              </Link>
+              <button
+                type="button"
+                onClick={handleOpenModal}
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors cursor-pointer pointer-events-auto hover:scale-110 ${
+                  isLogged
+                    ? 'bg-emerald-500 text-white border-emerald-400'
+                    : 'bg-zinc-800/80 text-white border-zinc-700/60 hover:bg-zinc-700'
+                }`}
+                title={isLogged ? 'Edit in My List' : 'Add to My List'}
+              >
+                {isLogged ? <Check className="h-4 w-4 font-bold" /> : <Plus className="h-4 w-4" />}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Details */}
@@ -80,7 +87,7 @@ export function MovieCard({ movie, index }: MovieCardProps) {
             <Rating value={movie.voteAverage} />
           </div>
 
-          <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`} className="block">
+          <Link href={targetHref} className="block">
             <h3 className="line-clamp-1 text-sm font-semibold text-zinc-100 group-hover:text-red-400 transition-colors">
               {movie.title}
             </h3>
@@ -96,21 +103,23 @@ export function MovieCard({ movie, index }: MovieCardProps) {
       </div>
 
       {/* Watchlist Modal Editor */}
-      <WatchlistModal
-        isOpen={Boolean(modalPosition)}
-        onClose={() => setModalPosition(null)}
-        position={modalPosition}
-        media={{
-          mediaId: movie.id,
-          mediaKind: movie.mediaKind === 'tv' ? 'tv' : 'movie',
-          title: movie.title,
-          posterPath: movie.posterPath,
-          backdropPath: movie.backdropPath,
-          releaseYear: movie.releaseYear,
-          voteAverage: movie.voteAverage,
-          genres: movie.genres,
-        }}
-      />
+      {!isPersonalCollection && (
+        <WatchlistModal
+          isOpen={Boolean(modalPosition)}
+          onClose={() => setModalPosition(null)}
+          position={modalPosition}
+          media={{
+            mediaId: movie.id,
+            mediaKind: movie.mediaKind === 'tv' ? 'tv' : 'movie',
+            title: movie.title,
+            posterPath: movie.posterPath,
+            backdropPath: movie.backdropPath,
+            releaseYear: movie.releaseYear,
+            voteAverage: movie.voteAverage,
+            genres: movie.genres,
+          }}
+        />
+      )}
     </>
   );
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Bookmark, Calendar, BarChart3, Search, User, LogOut, Settings } from 'lucide-react';
+import { Home, Bookmark, Calendar, BarChart3, Search, User, LogOut, Settings, Folder } from 'lucide-react';
 import { MobileNav } from './mobile-nav';
 import { useAuth } from '@/features/auth/context/auth-context';
 import { useProfile } from '@/features/profile/context/profile-context';

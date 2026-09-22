@@ -40,7 +40,7 @@ export function WatchlistHero({ items, onOpenItem }: WatchlistHeroProps) {
   }
 
   const currentItem = items[activeIndex];
-  const statusConfig = WATCH_STATUS_CONFIG[currentItem.status];
+  const statusConfig = currentItem?.status ? WATCH_STATUS_CONFIG[currentItem.status] : null;
 
   // Dynamically fetch missing logos for older items in the local watchlist
   useEffect(() => {
@@ -146,7 +146,7 @@ export function WatchlistHero({ items, onOpenItem }: WatchlistHeroProps) {
               className="flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-bold text-zinc-950 transition-all hover:bg-zinc-200 hover:scale-105 active:scale-95 shadow-xl shadow-white/10"
             >
               <Play className="h-4 w-4 fill-zinc-950 text-zinc-950" />
-              {currentItem.status === 'watching' ? 'Resume' : 'Watch Now'}
+              {currentItem?.status === 'watching' ? 'Resume' : 'Watch Now'}
             </Link>
             <Link
               href={`/${currentItem.mediaKind === 'movie' ? 'movies' : 'tv'}/${currentItem.mediaId}`}

@@ -7,6 +7,7 @@ import { siteConfig } from '@/lib/config/site';
 import { AuthProvider } from '@/features/auth/context/auth-context';
 
 import { WatchlistProvider } from '@/features/watchlist/context/watchlist-context';
+import { CollectionsProvider } from '@/features/collections/context/collections-context';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -40,10 +41,12 @@ export default function RootLayout({
         <AuthProvider>
           <ProfileProvider>
             <WatchlistProvider>
-              <Navbar />
-              <main className="flex-1 pb-24 md:pb-0 data-[fullscreen=true]:pb-0">{children}</main>
-              <Footer />
-              <ProfilePickerModal />
+              <CollectionsProvider>
+                <Navbar />
+                <main className="flex-1 pb-24 md:pb-0 data-[fullscreen=true]:pb-0">{children}</main>
+                <Footer />
+                <ProfilePickerModal />
+              </CollectionsProvider>
             </WatchlistProvider>
           </ProfileProvider>
         </AuthProvider>
