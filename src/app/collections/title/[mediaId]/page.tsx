@@ -146,9 +146,12 @@ export default function PersonalMediaDetail() {
                 >
                   {/* Collage Preview */}
                   <div className="flex gap-1 mb-4 h-16 opacity-80 group-hover:opacity-100 transition-opacity">
-                    {col.items.slice(0, 3).map((ci, idx) => (
-                      <img key={ci.mediaId} src={ci.posterPath} className={`w-11 h-16 object-cover rounded-md shadow-md ${idx > 0 ? '-ml-4' : ''}`} style={{ zIndex: 3 - idx }} />
-                    ))}
+                    {col.items.slice(0, 3).map((ci, idx) => {
+                      const item = getByMediaId(ci.mediaId);
+                      return item?.posterPath ? (
+                        <img key={ci.mediaId} src={item.posterPath} className={`w-11 h-16 object-cover rounded-md shadow-md ${idx > 0 ? '-ml-4' : ''}`} style={{ zIndex: 3 - idx }} />
+                      ) : null;
+                    })}
                   </div>
                   <h4 className="text-base font-bold text-white text-center line-clamp-1">{col.name}</h4>
                   <p className="text-xs text-zinc-400 mt-1">{col.items.length} titles</p>

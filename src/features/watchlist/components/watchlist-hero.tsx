@@ -92,10 +92,12 @@ export function WatchlistHero({ items, onOpenItem }: WatchlistHeroProps) {
         >
           {/* Status Badge */}
           <div className="flex items-center gap-3">
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-lg border backdrop-blur-md ${statusConfig.badgeClass} bg-black/40`}>
-              <span>{statusConfig.emoji}</span>
-              {statusConfig.label}
-            </span>
+            {statusConfig && (
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-lg border backdrop-blur-md ${statusConfig.badgeClass} bg-black/40`}>
+                <span>{statusConfig.emoji}</span>
+                {statusConfig.label}
+              </span>
+            )}
             {currentItem.userRating && (
               <span className="inline-flex items-center gap-1 text-amber-400 font-bold bg-black/40 px-3 py-1 rounded-full border border-amber-500/20 backdrop-blur-md text-xs">
                 <Star className="h-3.5 w-3.5 fill-amber-400" />

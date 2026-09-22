@@ -69,22 +69,31 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
       const now = new Date().toISOString();
       const stringMediaId = String(data.mediaId);
       const existingIndex = items.findIndex(i => String(i.mediaId) === stringMediaId);
+      const existingItem = existingIndex >= 0 ? items[existingIndex] : undefined;
       let optimisticItems = [...items];
-      
+
+      const fullItem: WatchlistItem = {
+        id: existingItem?.id || `temp_${Date.now()}`,
+        mediaKind: 'movie',
+        title: '',
+        posterPath: '',
+        status: 'watchlist',
+        createdAt: now,
+        ...existingItem,
+        ...data,
+        mediaId: stringMediaId,
+        updatedAt: now,
+      };
+
       if (existingIndex >= 0) {
-        optimisticItems[existingIndex] = { ...optimisticItems[existingIndex], ...data, updatedAt: now };
+        optimisticItems[existingIndex] = fullItem;
       } else {
-        optimisticItems.unshift({ 
-          id: `temp_${Date.now()}`, 
-          ...data, 
-          createdAt: now, 
-          updatedAt: now 
-        });
+        optimisticItems.unshift(fullItem);
       }
       setItems(optimisticItems);
 
       // Real update
-      await WatchlistService.upsert(userId, { ...data, mediaId: stringMediaId });
+      await WatchlistService.upsert(userId, fullItem);
       await fetchItems(); // Refresh to get proper DB IDs
     } catch (err) {
       console.error('Failed to upsert watchlist item:', err);

@@ -1,5 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { WatchlistItem, WatchStatus, AspectRatings, JournalEntry } from '../types';
+import { WatchlistItem, WatchStatus, AspectRatings, JournalEntry, Person } from '../types';
 import { MediaKind } from '@/types/movie';
 
 // Helper to get Supabase client directly in the service
@@ -19,37 +19,43 @@ export class WatchlistService {
     const [watchlistRes, moodsRes, personsRes] = await Promise.all([
       supabase.from('watchlist').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from('personal_moods').select('*').eq('user_id', userId),
-      supabase.from('favorite_persons').select('*').eq('user_id', userId)
+      supabase.from('favorite_persons').select('*').eq('user_id', userId),
     ]);
 
     if (watchlistRes.error) {
-      console.error('Error fetching watchlist from Supabase:', JSON.stringify(watchlistRes.error, null, 2));
-      return [];
+      console.error('Error fetching watchlist from Supabase:', watchlistRes.error);
+      throw watchlistRes.error;
     }
 
-    const moods = moodsRes.data || [];
-    const persons = personsRes.data || [];
+    const moodsMap = new Map<string, string[]>();
+    (moodsRes.data || []).forEach((row: any) => {
+      const existing = moodsMap.get(row.media_id) || [];
+      moodsMap.set(row.media_id, [...existing, row.mood]);
+    });
 
-    // Map database snake_case columns back to camelCase for the frontend
-    return (watchlistRes.data || []).map(row => {
-      const rowMoods = moods.filter(m => m.media_id === row.media_id).map(m => m.mood);
-      const rowPersons = persons.filter(p => p.media_id === row.media_id);
-      const favoriteActors = rowPersons.filter(p => p.role_type === 'actor').map(p => ({
-        id: p.person_id,
-        name: p.person_name,
-        roleType: p.role_type as 'actor',
-        profilePath: p.profile_path
-      }));
-      const favoriteCharacters = rowPersons.filter(p => p.role_type === 'character').map(p => ({
-        id: p.person_id,
-        name: p.person_name,
-        roleType: p.role_type as 'character',
-        profilePath: p.profile_path
-      }));
+    const charsMap = new Map<string, Person[]>();
+    const actorsMap = new Map<string, Person[]>();
+    (personsRes.data || []).forEach((row: any) => {
+      const person: Person = {
+        id: row.person_id,
+        name: row.person_name || row.name,
+        roleType: row.role_type,
+        profilePath: row.profile_path,
+      };
+      if (row.role_type === 'character') {
+        const existing = charsMap.get(row.media_id) || [];
+        charsMap.set(row.media_id, [...existing, person]);
+      } else if (row.role_type === 'actor') {
+        const existing = actorsMap.get(row.media_id) || [];
+        actorsMap.set(row.media_id, [...existing, person]);
+      }
+    });
 
+    return (watchlistRes.data || []).map((row: any) => {
+      const mediaId = String(row.media_id);
       return {
-        id: row.id,
-        mediaId: row.media_id,
+        id: row.id || mediaId,
+        mediaId,
         mediaKind: row.media_kind,
         title: row.title,
         posterPath: row.poster_path,
@@ -59,13 +65,13 @@ export class WatchlistService {
         genres: row.genres || [],
         status: row.status,
         userRating: row.user_rating,
-        aspects: row.aspects || {},
+        aspects: row.aspects || undefined,
         journal: row.journal || undefined,
-        moods: rowMoods,
-        favoriteActors,
-        favoriteCharacters,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
+        moods: moodsMap.get(mediaId) || [],
+        favoriteCharacters: charsMap.get(mediaId) || [],
+        favoriteActors: actorsMap.get(mediaId) || [],
+        createdAt: row.created_at || new Date().toISOString(),
+        updatedAt: row.updated_at || new Date().toISOString(),
       };
     });
   }
@@ -86,8 +92,8 @@ export class WatchlistService {
       aspects?: AspectRatings;
       journal?: JournalEntry;
       moods?: string[];
-      favoriteCharacters?: { id: string; name: string; roleType: 'character'; profilePath?: string }[];
-      favoriteActors?: { id: string; name: string; roleType: 'actor'; profilePath?: string }[];
+      favoriteCharacters?: Person[];
+      favoriteActors?: Person[];
     }
   ): Promise<void> {
     if (!userId) return;
