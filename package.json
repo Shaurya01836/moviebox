@@ -4,22 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:host": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "cap:sync": "next build && cap sync",
-    "cap:android": "next build && cap sync && cap open android",
-    "cap:ios": "next build && cap sync && cap open ios"
+    "lint": "eslint"
   },
   "dependencies": {
-    "@capacitor/android": "^8.5.2",
-    "@capacitor/cli": "^8.5.2",
-    "@capacitor/core": "^8.5.2",
-    "@capacitor/haptics": "^8.0.2",
-    "@capacitor/ios": "^8.5.2",
-    "@capacitor/splash-screen": "^8.0.2",
-    "@capacitor/status-bar": "^8.0.3",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "clsx": "^2.1.1",

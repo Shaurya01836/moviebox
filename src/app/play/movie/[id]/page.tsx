@@ -1,10 +1,6 @@
 import { VidLinkPlayer } from '@/features/details/components/video-player';
 import { BackButton } from '@/components/shared/back-button';
 
-export async function generateStaticParams() {
-  return [{ id: '1' }];
-}
-
 interface PlayMoviePageProps {
   params: Promise<{
     id: string;

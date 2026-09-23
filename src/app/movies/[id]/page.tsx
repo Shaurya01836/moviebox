@@ -3,10 +3,6 @@ import { TmdbService } from '@/services/tmdb.service';
 import { HeroDetails } from '@/features/details/components/hero-details';
 import { CastSlider } from '@/features/details/components/cast-slider';
 
-export async function generateStaticParams() {
-  return [{ id: '1' }];
-}
-
 interface MoviePageProps {
   params: Promise<{
     id: string;

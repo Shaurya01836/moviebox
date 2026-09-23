@@ -5,10 +5,6 @@ import { CastSlider } from '@/features/details/components/cast-slider';
 import { TvEpisodes } from '@/features/details/components/tv-episodes';
 import { EpisodeHeatmap } from '@/features/details/components/episode-heatmap';
 
-export async function generateStaticParams() {
-  return [{ id: '1' }];
-}
-
 interface TvPageProps {
   params: Promise<{
     id: string;
