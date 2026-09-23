@@ -1,4 +1,3 @@
-'use server';
 
 import { env } from '@/lib/config/env';
 

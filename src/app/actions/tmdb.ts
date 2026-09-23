@@ -1,4 +1,3 @@
-'use server';
 
 import { TmdbService } from '@/services/tmdb.service';
 

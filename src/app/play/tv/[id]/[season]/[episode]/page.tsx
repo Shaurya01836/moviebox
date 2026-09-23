@@ -1,6 +1,10 @@
 import { VidLinkPlayer } from '@/features/details/components/video-player';
 import { BackButton } from '@/components/shared/back-button';
 
+export async function generateStaticParams() {
+  return [{ id: '1', season: '1', episode: '1' }];
+}
+
 interface PlayTvPageProps {
   params: Promise<{
     id: string;
