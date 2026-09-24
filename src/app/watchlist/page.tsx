@@ -89,20 +89,24 @@ export default function WatchlistPage() {
     });
   }, [items, selectedMedia, searchQuery, sortBy]);
 
-  // Compute Dashboard Stats
-  const stats = React.useMemo(() => {
-    const total = items.length;
-    const watching = items.filter((i) => i?.status === 'watching').length;
-    const watched = items.filter((i) => i?.status === 'watched').length;
-    const ratedItems = items.filter((i) => i?.userRating);
-    const avgRating =
-      ratedItems.length > 0
-        ? (ratedItems.reduce((acc, i) => acc + (i.userRating || 0), 0) / ratedItems.length).toFixed(1)
-        : 'N/A';
-    return { total, watching, watched, avgRating };
-  }, [items]);
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-6">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl uppercase">
+              My Library
+            </h1>
+            <p className="text-sm text-zinc-400 mt-1">
+              Everything you've watched and your personal cinematic archive.
+            </p>
+          </div>
 
-  // Recommendations Logic
+          <Link href="/search">
+            <Button variant="primary" className="gap-2 font-bold shadow-red-600/30">
+              <Plus className="h-4 w-4" />
+              Add New Title
+            </Button>
+          </Link>
+        </div>
   const recommendations = React.useMemo(() => {
     if (isLoading) return [];
     
@@ -280,51 +284,7 @@ export default function WatchlistPage() {
           </Link>
         </div>
 
-        {/* Dashboard Stats Overview */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
-          {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-2xl border border-white/10 bg-zinc-900/60 p-3 sm:p-4 space-y-2 backdrop-blur-sm">
-                <Skeleton className="h-4 w-20 bg-zinc-800/60" />
-                <Skeleton className="h-7 w-12 bg-zinc-800/80" />
-              </div>
-            ))
-          ) : (
-            <>
-              <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-3 sm:p-4 space-y-0.5 sm:space-y-1 backdrop-blur-sm">
-                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-zinc-400">
-                  <Bookmark className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-400" />
-                  Total Logged
-                </div>
-                <p className="text-xl sm:text-2xl font-black text-white">{stats.total}</p>
-              </div>
 
-              <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-3 sm:p-4 space-y-0.5 sm:space-y-1 backdrop-blur-sm">
-                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-zinc-400">
-                  <Flame className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400" />
-                  Watching Now
-                </div>
-                <p className="text-xl sm:text-2xl font-black text-amber-400">{stats.watching}</p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-3 sm:p-4 space-y-0.5 sm:space-y-1 backdrop-blur-sm">
-                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-zinc-400">
-                  <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-400" />
-                  Completed
-                </div>
-                <p className="text-xl sm:text-2xl font-black text-emerald-400">{stats.watched}</p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-3 sm:p-4 space-y-0.5 sm:space-y-1 backdrop-blur-sm">
-                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-zinc-400">
-                  <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-amber-400 text-amber-400" />
-                  Avg Rating
-                </div>
-                <p className="text-xl sm:text-2xl font-black text-amber-400">{stats.avgRating}</p>
-              </div>
-            </>
-          )}
-        </div>
 
         {/* SECTION 1: MY ENTERTAINMENT */}
         <LibrarySection

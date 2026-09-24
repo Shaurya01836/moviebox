@@ -1,13 +1,10 @@
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@/lib/supabase/client';
 import { WatchlistItem, WatchStatus, AspectRatings, JournalEntry, Person } from '../types';
 import { MediaKind } from '@/types/movie';
 
 // Helper to get Supabase client directly in the service
 function getSupabase() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  return createClient();
 }
 
 export class WatchlistService {

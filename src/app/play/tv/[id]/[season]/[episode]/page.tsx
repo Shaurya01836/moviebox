@@ -12,7 +12,7 @@ interface PlayTvPageProps {
 
 export default async function PlayTvPage({ params }: PlayTvPageProps) {
   const { id, season, episode } = await params;
-  const show = await TmdbService.getShowDetails(id);
+  const show = await TmdbService.getTvDetails(id);
   const mediaTitle = show ? `${show.title} - S${season} E${episode}` : `Season ${season} Episode ${episode}`;
   
   return (

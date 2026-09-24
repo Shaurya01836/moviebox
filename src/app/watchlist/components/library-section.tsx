@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Link from 'next/link';
-import { Search, Film, Bookmark } from 'lucide-react';
+import { Search, Film, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react';
 import { WatchlistItem } from '@/features/watchlist/types';
 import { WatchlistCard } from '@/features/watchlist/components/watchlist-card';
 import { MovieCardSkeleton } from '@/components/shared/movie-card-skeleton';
@@ -46,7 +46,19 @@ export function LibrarySection({
   handleDelete,
   colorClass = 'red'
 }: LibrarySectionProps) {
-  const [visibleCount, setVisibleCount] = React.useState(10);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const ITEMS_PER_PAGE = 12;
+
+  // Reset page to 1 on filter or search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMedia, searchQuery, sortBy]);
+
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const paginatedItems = React.useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage]);
 
   const isLarge = size === 'large';
   const heightClass = isLarge ? 'h-40 sm:h-48' : 'h-24 sm:h-32';
@@ -77,9 +89,7 @@ export function LibrarySection({
           <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent" />
           
           <div className={`absolute inset-0 flex flex-col justify-center ${isLarge ? 'p-6 sm:p-10' : 'p-4 sm:p-6'}`}>
-            <div className={`flex ${isLarge ? 'h-12 w-12 mb-4' : 'h-10 w-10 mb-2'} items-center justify-center rounded-2xl ${colorStyles.bg} text-white shadow-lg ${colorStyles.shadow} transition-transform group-hover:scale-105`}>
-              <Icon className={isLarge ? 'h-6 w-6' : 'h-5 w-5'} />
-            </div>
+    
             <h3 className={`${isLarge ? 'text-2xl' : 'text-xl'} font-bold text-white mb-1`}>{title}</h3>
             <p className="text-sm font-medium text-zinc-400">
               {items.length} titles <span className="text-zinc-600 mx-1">•</span> 
@@ -107,7 +117,7 @@ export function LibrarySection({
                     onClick={() => setSelectedMedia(type.id as any)}
                     className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                       selectedMedia === type.id
-                        ? `bg-${colorClass}-600 text-white shadow-md`
+                        ? (colorClass === 'amber' ? 'bg-amber-600 text-white shadow-md' : colorClass === 'blue' ? 'bg-blue-600 text-white shadow-md' : 'bg-red-600 text-white shadow-md')
                         : 'text-zinc-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
@@ -174,7 +184,7 @@ export function LibrarySection({
             ) : (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-3.5 sm:gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                  {filteredItems.slice(0, visibleCount).map((item, index) => (
+                  {paginatedItems.map((item, index) => (
                     <WatchlistCard
                       key={item.id}
                       item={item}
@@ -185,15 +195,50 @@ export function LibrarySection({
                     />
                   ))}
                 </div>
-                {filteredItems.length > visibleCount && (
-                  <div className="flex justify-center pt-2">
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => setVisibleCount(prev => prev + 10)}
-                      className="bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl border border-white/10 px-8 py-2 cursor-pointer transition-colors"
-                    >
-                      Load More
-                    </Button>
+                
+                {totalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/5 text-xs text-zinc-400">
+                    <div>
+                      Showing <span className="font-bold text-white">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
+                      <span className="font-bold text-white">
+                        {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)}
+                      </span>{' '}
+                      of <span className="font-bold text-white">{filteredItems.length}</span> titles
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="flex items-center justify-center h-9 w-9 rounded-xl bg-zinc-950 border border-white/10 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors cursor-pointer"
+                        aria-label="Previous Page"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`h-9 w-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            currentPage === page
+                              ? (colorClass === 'amber' ? 'bg-amber-600 text-white shadow-md border border-amber-500/30' : colorClass === 'blue' ? 'bg-blue-600 text-white shadow-md border border-blue-500/30' : 'bg-red-600 text-white shadow-md border border-red-500/30')
+                              : 'bg-zinc-950 text-zinc-400 border border-white/10 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="flex items-center justify-center h-9 w-9 rounded-xl bg-zinc-950 border border-white/10 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors cursor-pointer"
+                        aria-label="Next Page"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { Collection } from '@/features/collections/types';
+import { CollectionWithItems } from '@/features/collections/types';
 import { WatchlistItem } from '@/features/watchlist/types';
 import { Folder } from 'lucide-react';
 
 interface CollectionAnalyticsProps {
-  collections: Collection[];
+  collections: CollectionWithItems[];
   items: WatchlistItem[];
 }
 
@@ -12,13 +12,13 @@ export function CollectionAnalytics({ collections, items }: CollectionAnalyticsP
   const data = useMemo(() => {
     if (collections.length === 0) return null;
 
-    const sortedCollections = [...collections].sort((a, b) => b.mediaIds.length - a.mediaIds.length);
+    const sortedCollections = [...collections].sort((a, b) => b.items.length - a.items.length);
     const largest = sortedCollections[0];
 
     const itemCollectionCounts = new Map<string, number>();
     collections.forEach(c => {
-      c.mediaIds.forEach(id => {
-        itemCollectionCounts.set(id, (itemCollectionCounts.get(id) || 0) + 1);
+      c.items.forEach(item => {
+        itemCollectionCounts.set(item.mediaId, (itemCollectionCounts.get(item.mediaId) || 0) + 1);
       });
     });
 
@@ -53,7 +53,7 @@ export function CollectionAnalytics({ collections, items }: CollectionAnalyticsP
         <p className="text-sm text-zinc-400">You have curated <strong className="text-white">{data.total}</strong> custom collections.</p>
         {data.largest && (
           <p className="text-sm text-zinc-400">
-            Your largest is <strong className="text-white">{data.largest.name}</strong> with {data.largest.mediaIds.length} titles.
+            Your largest is <strong className="text-white">{data.largest.name}</strong> with {data.largest.items.length} titles.
           </p>
         )}
       </div>
