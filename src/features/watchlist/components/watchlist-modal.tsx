@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Check, Trash2, Folder } from 'lucide-react';
+import { Plus, Check, Trash2, Folder, CheckCircle2, Flame, BookmarkPlus } from 'lucide-react';
 import { useWatchlist } from '../context/watchlist-context';
 import { useCollections } from '@/features/collections/context/collections-context';
 import { CreateCollectionModal } from '@/features/collections/components/create-collection-modal';
@@ -14,7 +14,7 @@ import { X } from 'lucide-react';
 interface WatchlistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  position?: { x: number; y: number; align?: 'top' | 'bottom' } | null; // Kept for backwards compatibility but ignored
+  position?: { x: number; y: number; align?: 'top' | 'bottom' } | null;
   media: {
     mediaId: string;
     mediaKind: MediaKind;
@@ -30,7 +30,7 @@ interface WatchlistModalProps {
 
 export function WatchlistModal({ isOpen, onClose, media }: WatchlistModalProps) {
   const { getByMediaId, upsert, remove } = useWatchlist();
-  const { collections, addMediaToCollection, removeMediaFromCollection } = useCollections();
+  const { collections, addMediaToCollection, removeMediaFromCollection, createCollection } = useCollections();
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const modalRef = React.useRef<HTMLDivElement>(null);
 
@@ -71,11 +71,17 @@ export function WatchlistModal({ isOpen, onClose, media }: WatchlistModalProps) 
 
   const existingItem = getByMediaId(media.mediaId);
   const isSaved = Boolean(existingItem);
+  const defaultCollectionNames = ['watched library', 'currently watching', 'bucket list'];
+  const customCollections = collections.filter(c => !defaultCollectionNames.includes(c.name.toLowerCase()));
 
-  const handleToggleDefaultList = async () => {
-    if (isSaved) {
+  const handleToggleStatus = async (status: 'watched' | 'watchlist' | 'watching') => {
+    const isCurrentlyActive = isSaved && existingItem?.status === status;
+
+    if (isCurrentlyActive) {
+      // Remove from watchlist
       await remove(media.mediaId);
     } else {
+      // Upsert with new status
       await upsert({
         mediaId: media.mediaId,
         mediaKind: media.mediaKind,
@@ -86,7 +92,7 @@ export function WatchlistModal({ isOpen, onClose, media }: WatchlistModalProps) 
         releaseYear: media.releaseYear,
         voteAverage: media.voteAverage,
         genres: media.genres,
-        status: 'watched',
+        status: status,
       });
     }
   };
@@ -135,35 +141,81 @@ export function WatchlistModal({ isOpen, onClose, media }: WatchlistModalProps) 
 
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
-        {/* Default Watchlist Option */}
-        <button
-          type="button"
-          onClick={handleToggleDefaultList}
-          className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all cursor-pointer select-none ${
-            isSaved
-              ? 'bg-red-500/15 text-red-400 border border-red-500/30 font-semibold'
-              : 'text-zinc-200 hover:bg-white/10 hover:text-white bg-white/5 border border-white/5'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            {isSaved ? <Check className="h-5 w-5 text-red-500" /> : <Plus className="h-5 w-5 text-zinc-400" />}
-            <span>{isSaved ? 'In My Library' : 'Add to My Library'}</span>
-          </div>
-          {isSaved && <span className="text-[10px] text-red-400 font-bold uppercase tracking-wider">Added</span>}
-        </button>
+        
+        {/* Default Watchlist Options */}
+        <div className="space-y-2.5">
+          {[
+            { 
+              label: 'Watched Library', 
+              status: 'watched' as const, 
+              icon: CheckCircle2,
+              activeColor: 'text-emerald-400',
+              activeBg: 'bg-emerald-500/15',
+              activeBorder: 'border-emerald-500/30'
+            },
+            { 
+              label: 'Currently Watching', 
+              status: 'watching' as const, 
+              icon: Flame,
+              activeColor: 'text-amber-400',
+              activeBg: 'bg-amber-500/15',
+              activeBorder: 'border-amber-500/30'
+            },
+            { 
+              label: 'Bucket List', 
+              status: 'watchlist' as const, 
+              icon: BookmarkPlus,
+              activeColor: 'text-blue-400',
+              activeBg: 'bg-blue-500/15',
+              activeBorder: 'border-blue-500/30'
+            }
+          ].map(option => {
+            const isActive = isSaved && existingItem?.status === option.status;
+            const Icon = option.icon;
+            
+            return (
+              <button
+                key={option.status}
+                type="button"
+                onClick={() => handleToggleStatus(option.status)}
+                className={`group flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 cursor-pointer select-none active:scale-[0.98] ${
+                  isActive
+                    ? `${option.activeBg} ${option.activeColor} ${option.activeBorder} border font-semibold shadow-inner`
+                    : 'text-zinc-300 hover:bg-white/10 hover:text-white bg-zinc-900/60 border border-white/5 hover:border-white/20 hover:shadow-lg'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
+                    {isActive ? (
+                      <Check className={`h-5 w-5 ${option.activeColor}`} />
+                    ) : (
+                      <Icon className="h-5 w-5 text-zinc-400 group-hover:text-white" />
+                    )}
+                  </div>
+                  <span className="tracking-wide">{isActive ? `In ${option.label}` : `Add to ${option.label}`}</span>
+                </div>
+                {isActive && (
+                  <span className={`text-[10px] ${option.activeColor} font-black uppercase tracking-widest animate-in zoom-in duration-300`}>
+                    Added
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
 
         {/* Collections Section - Only show if saved to My Library */}
         {isSaved && (
           <div className="pt-2">
             <span className="px-1 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Collections</span>
             <div className="mt-2 space-y-1.5">
-              {collections.length === 0 ? (
+              {customCollections.length === 0 ? (
                 <div className="px-3 py-3 rounded-xl bg-zinc-900/60 border border-white/5 text-center">
                   <p className="text-xs text-zinc-400 font-medium">No custom collections yet.</p>
                 </div>
               ) : (
-                collections.map(col => {
-                  const inCollection = col.items.some(i => i.mediaId === media.mediaId);
+                customCollections.map(col => {
+                  const inCollection = (col as any).items?.some((i: any) => i.mediaId === media.mediaId) ?? false;
                   return (
                     <button
                       key={col.id}

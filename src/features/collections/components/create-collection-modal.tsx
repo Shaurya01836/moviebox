@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Plus, Folder, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +23,13 @@ export function CreateCollectionModal({ isOpen, onClose, defaultName = '' }: Cre
     if (isOpen) {
       setName(defaultName);
       setDescription('');
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen, defaultName]);
 
   if (!isOpen) return null;
@@ -42,18 +49,18 @@ export function CreateCollectionModal({ isOpen, onClose, defaultName = '' }: Cre
     }
   };
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-zinc-950 p-6 sm:p-8 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md max-h-[90vh] flex flex-col rounded-3xl border border-white/10 bg-zinc-950 p-6 sm:p-8 shadow-2xl overflow-hidden">
         
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 rounded-full p-2 text-zinc-400 hover:bg-white/10 hover:text-white transition-all cursor-pointer"
+          className="absolute right-5 top-5 rounded-full p-2 text-zinc-400 hover:bg-white/10 hover:text-white transition-all cursor-pointer z-10"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 shrink-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-500 border border-red-500/20">
             <Folder className="h-5 w-5" />
           </div>
@@ -63,8 +70,8 @@ export function CreateCollectionModal({ isOpen, onClose, defaultName = '' }: Cre
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 overflow-y-auto pr-1">
+          <div className="space-y-1.5 shrink-0">
             <label className="text-xs font-semibold text-zinc-300 ml-1">Name</label>
             <Input
               value={name}
@@ -76,7 +83,7 @@ export function CreateCollectionModal({ isOpen, onClose, defaultName = '' }: Cre
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 shrink-0">
             <label className="text-xs font-semibold text-zinc-300 ml-1">Description <span className="text-zinc-600 font-normal">(Optional)</span></label>
             <textarea
               value={description}
@@ -87,7 +94,7 @@ export function CreateCollectionModal({ isOpen, onClose, defaultName = '' }: Cre
             />
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 shrink-0">
             <Button
               type="submit"
               disabled={isLoading || !name.trim()}
@@ -107,4 +114,6 @@ export function CreateCollectionModal({ isOpen, onClose, defaultName = '' }: Cre
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

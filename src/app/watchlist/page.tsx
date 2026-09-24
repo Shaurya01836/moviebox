@@ -16,6 +16,7 @@ import { MovieCardSkeleton } from '@/components/shared/movie-card-skeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { LibrarySection } from './components/library-section';
 
 export default function WatchlistPage() {
   const { user } = useAuth();
@@ -26,10 +27,10 @@ export default function WatchlistPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const [creatingRecName, setCreatingRecName] = React.useState<string | null>(null);
 
-  const [isEntertainmentOpen, setIsEntertainmentOpen] = React.useState(false);
-  const [visibleCount, setVisibleCount] = React.useState(10);
+  const [isEntertainmentOpen, setIsEntertainmentOpen] = React.useState(true);
+  const [isWatchingOpen, setIsWatchingOpen] = React.useState(false);
+  const [isBucketListOpen, setIsBucketListOpen] = React.useState(false);
 
-  const [selectedStatus, setSelectedStatus] = React.useState<WatchStatus | 'all'>('all');
   const [selectedMedia, setSelectedMedia] = React.useState<'all' | 'movie' | 'tv' | 'anime'>('all');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [sortBy, setSortBy] = React.useState<'recent' | 'rating_desc' | 'rating_asc' | 'az' | 'za'>('recent');
@@ -46,10 +47,10 @@ export default function WatchlistPage() {
     genres?: string[];
   } | null>(null);
 
-  // Filter items by status, media kind, and search query
-  const filteredItems = React.useMemo(() => {
+  // Filter items by media kind, and search query
+  const getFilteredItems = React.useCallback((status: WatchStatus) => {
     const result = items.filter(Boolean).filter((item) => {
-      const matchesStatus = selectedStatus === 'all' || item?.status === selectedStatus;
+      const matchesStatus = item?.status === status;
       
       let matchesMedia = true;
       if (selectedMedia === 'movie') {
@@ -86,7 +87,7 @@ export default function WatchlistPage() {
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
-  }, [items, selectedStatus, selectedMedia, searchQuery, sortBy]);
+  }, [items, selectedMedia, searchQuery, sortBy]);
 
   // Compute Dashboard Stats
   const stats = React.useMemo(() => {
@@ -326,145 +327,67 @@ export default function WatchlistPage() {
         </div>
 
         {/* SECTION 1: MY ENTERTAINMENT */}
-        <section className="space-y-4">
-          <button 
-            onClick={() => setIsEntertainmentOpen(!isEntertainmentOpen)}
-            className="w-full block group text-left cursor-pointer"
-          >
-            <div className="relative w-full h-40 sm:h-48 rounded-3xl overflow-hidden border border-white/10 bg-zinc-900 shadow-xl transition-all group-hover:border-white/20">
-              {/* Dynamic Poster Background */}
-              <div className="absolute inset-0 flex">
-                {items.slice(0, 8).map((item) => (
-                  <div key={item.mediaId} className="h-full flex-1 opacity-40 group-hover:opacity-60 transition-opacity duration-500" style={{ backgroundImage: `url(${item.posterPath})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                ))}
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent" />
-              
-              <div className="absolute inset-0 flex flex-col justify-center p-6 sm:p-10">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-600 text-white shadow-lg shadow-red-900/50 mb-4 transition-transform group-hover:scale-105">
-                  <Bookmark className="h-6 w-6" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-1">My Entertainment</h3>
-                <p className="text-sm font-medium text-zinc-400">
-                  {items.length} titles <span className="text-zinc-600 mx-1">•</span> 
-                  {items.filter(i => i.mediaKind === 'movie' && !i.genres?.includes('Animation')).length} Movies <span className="text-zinc-600 mx-1">•</span> 
-                  {items.filter(i => i.mediaKind === 'tv' && !i.genres?.includes('Animation')).length} Series <span className="text-zinc-600 mx-1">•</span> 
-                  {items.filter(i => i.genres?.includes('Animation')).length} Anime
-                </p>
-              </div>
-            </div>
-          </button>
-          
-          {isEntertainmentOpen && (
-            <div className="bg-zinc-900/30 rounded-3xl p-4 sm:p-6 border border-white/5 space-y-6 mt-4 animate-in fade-in slide-in-from-top-4 duration-300">
-              {/* Controls Bar: Media Filter & Local Search */}
-              <div className="flex flex-col md:flex-row gap-3 sm:gap-4 items-stretch md:items-center justify-between">
-                <div className="flex items-center overflow-x-auto gap-1 sm:gap-1.5 p-1 rounded-2xl bg-zinc-950/80 border border-zinc-800 scrollbar-none">
-                  {[
-                    { id: 'all', label: 'All' },
-                    { id: 'movie', label: 'Movies' },
-                    { id: 'tv', label: 'TV Shows' },
-                    { id: 'anime', label: 'Anime' }
-                  ].map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => setSelectedMedia(type.id as any)}
-                      className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
-                        selectedMedia === type.id
-                          ? 'bg-red-600 text-white shadow-md'
-                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
+        <LibrarySection
+          title="My Entertainment"
+          items={items.filter(i => i.status === 'watched')}
+          filteredItems={getFilteredItems('watched')}
+          icon={Bookmark}
+          size="large"
+          colorClass="red"
+          isOpen={isEntertainmentOpen}
+          onToggle={() => setIsEntertainmentOpen(!isEntertainmentOpen)}
+          isLoading={isLoading}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedMedia={selectedMedia}
+          setSelectedMedia={setSelectedMedia}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+        />
 
-                <div className="relative w-full md:w-64">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-zinc-500 pointer-events-none" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Filter your list..."
-                    className="pl-9 h-10 bg-zinc-950 border-zinc-800 text-xs text-white"
-                  />
-                </div>
+        {/* SECTION 1B: CURRENTLY WATCHING */}
+        <LibrarySection
+          title="Currently Watching"
+          items={items.filter(i => i.status === 'watching')}
+          filteredItems={getFilteredItems('watching')}
+          icon={Flame}
+          size="small"
+          colorClass="amber"
+          isOpen={isWatchingOpen}
+          onToggle={() => setIsWatchingOpen(!isWatchingOpen)}
+          isLoading={isLoading}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedMedia={selectedMedia}
+          setSelectedMedia={setSelectedMedia}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+        />
 
-                <div className="relative shrink-0">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                    className="h-10 w-full sm:w-auto appearance-none rounded-xl bg-zinc-950 border border-zinc-800 px-4 pr-10 text-xs font-semibold text-white focus:border-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-700 transition-colors"
-                  >
-                    <option value="recent">Recently Added</option>
-                    <option value="rating_desc">Highest Rated</option>
-                    <option value="rating_asc">Lowest Rated</option>
-                    <option value="az">A–Z</option>
-                    <option value="za">Z–A</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
-                    <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Watchlist Grid / Cards */}
-              {isLoading ? (
-                <div className="grid grid-cols-2 gap-3.5 sm:gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <MovieCardSkeleton key={i} />
-                  ))}
-                </div>
-              ) : filteredItems.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 rounded-3xl border border-dashed border-zinc-800 bg-zinc-950/50 p-8">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-500">
-                    <Film className="h-8 w-8 text-zinc-400" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-bold text-white">No titles found</h3>
-                    <p className="text-xs text-zinc-400 max-w-sm">
-                      {searchQuery ? "Try adjusting your search or filters." : "Start building your personal cinema journal!"}
-                    </p>
-                  </div>
-                  {!searchQuery && (
-                    <Link href="/search">
-                      <Button variant="primary" size="sm" className="font-bold gap-1.5 mt-2">
-                        <Search className="h-3.5 w-3.5" />
-                        Explore Movies & TV Shows
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-3.5 sm:gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                    {filteredItems.slice(0, visibleCount).map((item, index) => (
-                      <WatchlistCard
-                        key={item.id}
-                        item={item}
-                        index={index}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        isPersonalCollection={true}
-                      />
-                    ))}
-                  </div>
-                  {filteredItems.length > visibleCount && (
-                    <div className="flex justify-center pt-2">
-                      <Button 
-                        variant="secondary" 
-                        onClick={() => setVisibleCount(prev => prev + 10)}
-                        className="bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl border border-white/10 px-8 py-2 cursor-pointer transition-colors"
-                      >
-                        Load More
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </section>
+        {/* SECTION 1C: BUCKET LIST */}
+        <LibrarySection
+          title="Bucket List"
+          items={items.filter(i => i.status === 'watchlist')}
+          filteredItems={getFilteredItems('watchlist')}
+          icon={CheckCircle2}
+          size="small"
+          colorClass="blue"
+          isOpen={isBucketListOpen}
+          onToggle={() => setIsBucketListOpen(!isBucketListOpen)}
+          isLoading={isLoading}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedMedia={selectedMedia}
+          setSelectedMedia={setSelectedMedia}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+        />
 
         {/* SECTION 2: MY COLLECTIONS */}
         <section className="bg-zinc-900/30 rounded-3xl p-4 sm:p-6 border border-white/5 space-y-6 mt-8">
@@ -544,45 +467,7 @@ export default function WatchlistPage() {
           </section>
         )}
 
-      {/* Floating Glassmorphic Status Filter (Applies to My Entertainment) */}
-      <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92vw] max-w-3xl">
-        <div className="flex items-center overflow-x-auto gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-full bg-zinc-950/85 border border-white/10 backdrop-blur-xl shadow-2xl scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setSelectedStatus('all')}
-            className={`shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              selectedStatus === 'all'
-                ? 'bg-white text-zinc-950 shadow-md scale-100'
-                : 'text-zinc-300 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            All ({items.length})
-          </button>
-          {(Object.keys(WATCH_STATUS_CONFIG) as WatchStatus[]).map((st) => {
-            const cfg = WATCH_STATUS_CONFIG[st];
-            const count = items.filter((i) => i?.status === st).length;
-            const isSelected = selectedStatus === st;
 
-            return (
-              <button
-                key={st}
-                type="button"
-                onClick={() => setSelectedStatus(st)}
-                className={`shrink-0 flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-white text-zinc-950 shadow-md'
-                    : 'text-zinc-300 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <span>{cfg.label}</span>
-                <span className={`text-[10px] sm:text-[11px] ${isSelected ? 'text-zinc-600' : 'text-zinc-500'}`}>
-                  ({count})
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       <WatchlistModal
         isOpen={Boolean(editingMedia)}

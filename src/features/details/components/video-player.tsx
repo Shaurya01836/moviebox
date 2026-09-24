@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { BackButton } from '@/components/shared/back-button';
+import { useAuth } from '@/features/auth/context/auth-context';
+import { HistoryService } from '@/features/history/services/history.service';
 
 interface VidLinkPlayerProps {
   tmdbId: string | number;
@@ -9,6 +11,8 @@ interface VidLinkPlayerProps {
   season?: number;
   episode?: number;
   startAt?: number;
+  mediaTitle?: string;
+  posterPath?: string;
 }
 
 export function VidLinkPlayer({
@@ -17,10 +21,17 @@ export function VidLinkPlayer({
   season = 1,
   episode = 1,
   startAt = 0,
+  mediaTitle = 'Unknown Title',
+  posterPath,
 }: VidLinkPlayerProps) {
   const [isLoading, setIsLoading] = React.useState(true);
   const [showControls, setShowControls] = React.useState(true);
   const hideControlsTimer = React.useRef<NodeJS.Timeout | null>(null);
+  const { user } = useAuth();
+  
+  // Track progress locally to throttle DB writes
+  const latestProgress = React.useRef({ time: startAt, duration: 0 });
+  const lastSyncTime = React.useRef(0);
 
   const resetHideTimer = React.useCallback(() => {
     setShowControls(true);
@@ -39,19 +50,47 @@ export function VidLinkPlayer({
 
   React.useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Ensure the message is from VidLink
-      if (event.origin !== 'https://vidlink.pro') return;
-
       if (event.data?.type === 'MEDIA_DATA') {
         const mediaData = event.data.data;
         // Save to localStorage so it can be resumed later
         localStorage.setItem('vidLinkProgress', JSON.stringify(mediaData));
+        
+        // Update ref
+        if (mediaData.currentTime) latestProgress.current.time = mediaData.currentTime;
+        if (mediaData.duration) latestProgress.current.duration = mediaData.duration;
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  // Sync loop (every 15 seconds)
+  React.useEffect(() => {
+    if (!user) return;
+    
+    const syncInterval = setInterval(async () => {
+      const { time, duration } = latestProgress.current;
+      
+      // Only sync if progress has advanced by at least 5 seconds since last sync
+      if (time > lastSyncTime.current + 5) {
+        lastSyncTime.current = time;
+        
+        await HistoryService.syncProgress(user.id, {
+          mediaId: String(tmdbId),
+          mediaKind: type,
+          title: mediaTitle,
+          posterPath,
+          seasonNumber: type === 'tv' ? season : undefined,
+          episodeNumber: type === 'tv' ? episode : undefined,
+          progressSeconds: Math.floor(time),
+          durationSeconds: Math.floor(duration),
+        }).catch(console.error);
+      }
+    }, 15000); // 15s throttle
+
+    return () => clearInterval(syncInterval);
+  }, [user, mediaTitle, posterPath, tmdbId, type, season, episode]);
 
   const baseUrl = 'https://vidsrc.me/embed';
   let urlPath = type === 'movie' ? `/movie?tmdb=${tmdbId}` : `/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`;

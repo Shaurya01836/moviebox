@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Bookmark, Search, Calendar, BarChart3, User } from 'lucide-react';
+import { Home, Bookmark, Search, Calendar, BarChart3, User, History } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/auth-context';
 import { useProfile } from '@/features/profile/context/profile-context';
 import { AVATAR_OPTIONS, getAvatarOption } from '@/features/profile/types';
@@ -26,7 +26,7 @@ export function MobileNav({ onOpenAuth }: MobileNavProps) {
     { title: 'Home', href: '/', icon: Home },
     { title: 'Search', href: '/search', icon: Search },
     { title: 'Library', href: '/watchlist', icon: Bookmark },
-    { title: 'Timeline', href: '/timeline', icon: Calendar },
+    { title: 'History', href: '/history', icon: History },
     { title: 'Stats', href: '/stats', icon: BarChart3 },
   ];
 
