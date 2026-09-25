@@ -85,14 +85,15 @@ export class TmdbService {
    */
   static async getTrendingMovies(page = 1): Promise<Movie[]> {
     const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
-    const url = `${env.tmdb.baseUrl}/trending/movie/week?api_key=${apiKey}&page=${page}`;
+    // Changed from /trending/movie/week to /trending/all/day for faster daily updates
+    const url = `${env.tmdb.baseUrl}/trending/all/day?api_key=${apiKey}&page=${page}`;
 
     try {
       const res = await this.fetchWithRetry(url, { next: { revalidate: 3600 } });
       if (!res.ok) return [];
 
       const data: RawTmdbSearchResponse = await res.json();
-      return (data.results || []).map((item) => this.mapTmdbItemToMovie({ ...item, media_type: 'movie' }));
+      return (data.results || []).map((item) => this.mapTmdbItemToMovie({ ...item, media_type: item.media_type || 'movie' }));
     } catch (err) {
       console.error('Error fetching TMDB trending movies:', err);
       return [];

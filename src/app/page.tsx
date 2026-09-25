@@ -16,7 +16,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   ]);
 
   const trendingMovies = tmdbTrending.length > 0 ? tmdbTrending : POPULAR_MOVIES;
-  const featuredMovies = await TmdbService.populateLogosForMovies(trendingMovies.slice(0, 5));
+  const featuredMovies = await TmdbService.populateLogosForMovies(trendingMovies.slice(0, 7));
 
   let genreResults = null;
   let popularMovies: Movie[] = [];
