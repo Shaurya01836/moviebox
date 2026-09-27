@@ -108,31 +108,37 @@ export function VidLinkPlayer({
           if (payload.duration) latestProgress.current.duration = payload.duration;
         }
         
-        // Optionally save the serialized local history if provided
+        // Save local history if provided by frame
         if (payload.type === 'MEDIA_DATA') {
           localStorage.setItem('vidLinkProgress', JSON.stringify(payload.data));
         }
-      } catch (e) {
-        // Ignore unparseable messages from other extensions or frames
-      }
+      } catch (e) {}
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Sync loop (every 15 seconds)
+  // Sync watch history on initial mount and then periodic throttle loop (every 10s)
   React.useEffect(() => {
-    if (!user) return;
-    
+    HistoryService.syncProgress(user?.id, {
+      mediaId: String(tmdbId),
+      mediaKind: type === 'anime' ? 'tv' : type,
+      title: mediaTitle,
+      posterPath,
+      seasonNumber: type === 'tv' ? season : undefined,
+      episodeNumber: type === 'tv' ? episode : undefined,
+      progressSeconds: Math.floor(latestProgress.current.time || startAt),
+      durationSeconds: Math.floor(latestProgress.current.duration || 0),
+    }).catch(console.error);
+
     const syncInterval = setInterval(async () => {
       const { time, duration } = latestProgress.current;
       
-      // Only sync if progress has advanced by at least 5 seconds since last sync
-      if (time > lastSyncTime.current + 5) {
+      if (time > lastSyncTime.current + 3) {
         lastSyncTime.current = time;
         
-        await HistoryService.syncProgress(user.id, {
+        await HistoryService.syncProgress(user?.id, {
           mediaId: String(tmdbId),
           mediaKind: type === 'anime' ? 'tv' : type,
           title: mediaTitle,
@@ -143,12 +149,12 @@ export function VidLinkPlayer({
           durationSeconds: Math.floor(duration),
         }).catch(console.error);
       }
-    }, 15000); // 15s throttle
+    }, 10000);
 
     return () => clearInterval(syncInterval);
-  }, [user, mediaTitle, posterPath, tmdbId, type, season, episode]);
+  }, [user?.id, mediaTitle, posterPath, tmdbId, type, season, episode, startAt]);
 
-  const activeProvider = PROVIDERS.find(p => p.id === activeProviderId) || PROVIDERS[0];
+  const activeProvider = PROVIDERS.find((p) => p.id === activeProviderId) || PROVIDERS[0];
   const iframeSrc = activeProvider.getUrl({ tmdbId, type, season, episode, startAt });
 
   return (
@@ -188,7 +194,7 @@ export function VidLinkPlayer({
         }`}
         onMouseEnter={() => setShowControls(true)}
       >
-        {PROVIDERS.map(provider => (
+        {PROVIDERS.map((provider) => (
           <button
             key={provider.id}
             onClick={() => {

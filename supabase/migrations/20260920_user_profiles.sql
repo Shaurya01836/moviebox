@@ -11,3 +11,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own profiles" 
+  ON public.profiles 
+  FOR ALL 
+  USING (auth.uid()::text = user_id)
+  WITH CHECK (auth.uid()::text = user_id);

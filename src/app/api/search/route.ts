@@ -8,7 +8,12 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
 
     const data = await TmdbService.searchMulti(query, isNaN(page) ? 1 : page);
-    return NextResponse.json(data);
+    
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=3600',
+      },
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown search error';
     console.error('Search API Handler Error:', message);
