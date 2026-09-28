@@ -1,0 +1,113 @@
+export const TMDB_API_KEY = '62513680a70453f584b71ef5945ccc61';
+export const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+
+export interface Movie {
+  id: string;
+  title: string;
+  overview: string;
+  posterPath: string;
+  backdropPath: string;
+  logoPath?: string;
+  releaseYear: number;
+  voteAverage: number;
+  genres: string[];
+  qualityBadge?: string;
+  mediaKind?: 'movie' | 'tv';
+  durationMinutes?: number;
+}
+
+let genreCache: Record<number, string> = {};
+
+export async function getGenreMap(): Promise<Record<number, string>> {
+  if (Object.keys(genreCache).length > 0) return genreCache;
+  const res = await fetch(`${TMDB_BASE_URL}/genre/movie/list?api_key=${TMDB_API_KEY}`);
+  const data = await res.json();
+  if (data.genres) {
+    data.genres.forEach((g: { id: number; name: string }) => {
+      genreCache[g.id] = g.name;
+    });
+  }
+  return genreCache;
+}
+
+export function mapTmdbItem(item: any, genresDictionary: Record<number, string>): Movie {
+  const genreNames = item.genre_ids
+    ? item.genre_ids.map((id: number) => genresDictionary[id]).filter(Boolean)
+    : ['Movie'];
+
+  return {
+    id: item.id.toString(),
+    title: item.title || item.name || 'Untitled',
+    overview: item.overview || 'No overview available.',
+    posterPath: item.poster_path
+      ? `${TMDB_IMAGE_BASE}/w500${item.poster_path}`
+      : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800',
+    backdropPath: item.backdrop_path
+      ? `${TMDB_IMAGE_BASE}/w1280${item.backdrop_path}`
+      : 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1920',
+    releaseYear: item.release_date
+      ? new Date(item.release_date).getFullYear()
+      : item.first_air_date
+      ? new Date(item.first_air_date).getFullYear()
+      : 2025,
+    voteAverage: item.vote_average ? Number(item.vote_average.toFixed(1)) : 0,
+    genres: genreNames.length > 0 ? genreNames : ['Movie'],
+    qualityBadge: item.vote_average >= 8 ? '4K' : 'HD',
+    mediaKind: item.media_type === 'tv' ? 'tv' : 'movie',
+  };
+}
+
+export async function fetchTrendingMovies(): Promise<Movie[]> {
+  const [genreMap, res] = await Promise.all([
+    getGenreMap(),
+    fetch(`${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}`),
+  ]);
+  const data = await res.json();
+  return (data.results || []).map((item: any) => mapTmdbItem(item, genreMap));
+}
+
+export async function fetchPopularMovies(): Promise<Movie[]> {
+  const [genreMap, res] = await Promise.all([
+    getGenreMap(),
+    fetch(`${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}`),
+  ]);
+  const data = await res.json();
+  return (data.results || []).map((item: any) => mapTmdbItem(item, genreMap));
+}
+
+export async function fetchMoviesByGenre(genreId: string): Promise<Movie[]> {
+  const [genreMap, res] = await Promise.all([
+    getGenreMap(),
+    fetch(`${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${genreId}`),
+  ]);
+  const data = await res.json();
+  return (data.results || []).map((item: any) => mapTmdbItem(item, genreMap));
+}
+
+export async function searchMovies(query: string): Promise<Movie[]> {
+  const [genreMap, res] = await Promise.all([
+    getGenreMap(),
+    fetch(`${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`),
+  ]);
+  const data = await res.json();
+  return (data.results || [])
+    .filter((item: any) => item.media_type !== 'person')
+    .map((item: any) => mapTmdbItem(item, genreMap));
+}
+
+export async function fetchMovieDetails(id: string): Promise<Movie & { runtime?: number; tagline?: string }> {
+  const [genreMap, res] = await Promise.all([
+    getGenreMap(),
+    fetch(`${TMDB_BASE_URL}/movie/${id}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits`),
+  ]);
+  const item = await res.json();
+  const base = mapTmdbItem(item, genreMap);
+  return {
+    ...base,
+    genres: item.genres?.map((g: any) => g.name) || base.genres,
+    runtime: item.runtime,
+    tagline: item.tagline,
+    durationMinutes: item.runtime,
+  };
+}

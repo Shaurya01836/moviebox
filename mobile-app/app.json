@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Cinefolio",
+    "slug": "cinefolio",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.moviebox.app"
+    },
+    "android": {
+      "package": "com.moviebox.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#09090B",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-video"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "eb4a95cf-7112-4ab4-abc9-467d158af9f1"
+      }
+    },
+    "owner": "shaurya01836"
+  }
+}
