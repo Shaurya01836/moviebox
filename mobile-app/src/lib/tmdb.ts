@@ -15,6 +15,18 @@ export interface Movie {
   qualityBadge?: string;
   mediaKind?: 'movie' | 'tv';
   durationMinutes?: number;
+  cast?: { id: number; name: string; character: string; profilePath: string }[];
+  seasons?: { id: number; seasonNumber: number; episodeCount: number; name: string }[];
+}
+
+export interface TvEpisode {
+  id: number;
+  name: string;
+  overview: string;
+  episodeNumber: number;
+  seasonNumber: number;
+  stillPath: string;
+  runtime: number;
 }
 
 let genreCache: Record<number, string> = {};
@@ -96,18 +108,47 @@ export async function searchMovies(query: string): Promise<Movie[]> {
     .map((item: any) => mapTmdbItem(item, genreMap));
 }
 
-export async function fetchMovieDetails(id: string): Promise<Movie & { runtime?: number; tagline?: string }> {
+export async function fetchMovieDetails(id: string, type: 'movie' | 'tv' = 'movie'): Promise<Movie & { runtime?: number; tagline?: string }> {
   const [genreMap, res] = await Promise.all([
     getGenreMap(),
-    fetch(`${TMDB_BASE_URL}/movie/${id}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits`),
+    fetch(`${TMDB_BASE_URL}/${type}/${id}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits`),
   ]);
   const item = await res.json();
   const base = mapTmdbItem(item, genreMap);
+  const runtime = item.runtime || (item.episode_run_time ? item.episode_run_time[0] : undefined);
+  
   return {
     ...base,
     genres: item.genres?.map((g: any) => g.name) || base.genres,
-    runtime: item.runtime,
+    runtime: runtime,
     tagline: item.tagline,
-    durationMinutes: item.runtime,
+    durationMinutes: runtime,
+    mediaKind: type,
+    cast: item.credits?.cast?.slice(0, 10).map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      character: c.character,
+      profilePath: c.profile_path ? `${TMDB_IMAGE_BASE}/w185${c.profile_path}` : '',
+    })),
+    seasons: item.seasons?.map((s: any) => ({
+      id: s.id,
+      seasonNumber: s.season_number,
+      episodeCount: s.episode_count,
+      name: s.name,
+    })),
   };
+}
+
+export async function fetchTvSeason(id: string, seasonNumber: number): Promise<TvEpisode[]> {
+  const res = await fetch(`${TMDB_BASE_URL}/tv/${id}/season/${seasonNumber}?api_key=${TMDB_API_KEY}`);
+  const data = await res.json();
+  return (data.episodes || []).map((ep: any) => ({
+    id: ep.id,
+    name: ep.name,
+    overview: ep.overview,
+    episodeNumber: ep.episode_number,
+    seasonNumber: ep.season_number,
+    stillPath: ep.still_path ? `${TMDB_IMAGE_BASE}/w500${ep.still_path}` : '',
+    runtime: ep.runtime,
+  }));
 }

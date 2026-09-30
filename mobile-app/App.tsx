@@ -8,6 +8,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { WatchlistProvider } from './src/context/WatchlistContext';
+import { ProfileProvider, useProfile, getAvatarOption } from './src/context/ProfileContext';
+import { Feather } from '@expo/vector-icons';
 
 import HomeScreen from './src/screens/HomeScreen';
 import SearchScreen from './src/screens/SearchScreen';
@@ -36,7 +38,7 @@ function TabIcon({ focused, label, icon }: TabItemProps) {
   return (
     <View style={tabStyles.wrapper}>
       <View style={[tabStyles.iconWrap, focused && tabStyles.iconWrapActive]}>
-        <Text style={[tabStyles.icon, focused && tabStyles.iconActive]}>{icon}</Text>
+        <Feather name={icon as any} style={[tabStyles.icon, focused && tabStyles.iconActive]} />
         {focused && <View style={tabStyles.activeDot} />}
       </View>
       <Text style={[tabStyles.label, focused && tabStyles.labelActive]}>{label}</Text>
@@ -46,19 +48,28 @@ function TabIcon({ focused, label, icon }: TabItemProps) {
 
 function ProfileTabIcon({ focused }: { focused: boolean }) {
   const { user } = useAuth();
+  const { profile } = useProfile();
+  
   return (
     <View style={tabStyles.wrapper}>
       <View style={tabStyles.iconWrap}>
         {user ? (
           <View style={[tabStyles.avatarCircle, focused && tabStyles.avatarCircleFocused]}>
-            <Text style={tabStyles.avatarText}>{user.email?.[0]?.toUpperCase() || '?'}</Text>
+            {profile?.avatarUrl ? (
+              <Image 
+                source={{ uri: getAvatarOption(profile.avatarUrl).url }} 
+                style={tabStyles.avatarImg} 
+              />
+            ) : (
+              <Text style={tabStyles.avatarText}>{user.email?.[0]?.toUpperCase() || '?'}</Text>
+            )}
           </View>
         ) : (
-          <Text style={[tabStyles.icon, focused && tabStyles.iconActive]}>👤</Text>
+          <Feather name="user" style={[tabStyles.icon, focused && tabStyles.iconActive]} />
         )}
       </View>
       <Text style={[tabStyles.label, focused && tabStyles.labelActive]} numberOfLines={1}>
-        {user ? (user.email?.split('@')[0]?.slice(0, 8) + (user.email!.split('@')[0].length > 8 ? '…' : '')) : 'Sign In'}
+        {user ? (profile?.name || user.email?.split('@')[0]?.slice(0, 8)) : 'Sign In'}
       </Text>
     </View>
   );
@@ -80,7 +91,10 @@ const tabStyles = StyleSheet.create({
   avatarCircle: {
     width: 26, height: 26, borderRadius: 13,
     backgroundColor: '#27272A', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: '#3F3F46',
+    borderWidth: 1, borderColor: '#3F3F46', overflow: 'hidden',
+  },
+  avatarImg: {
+    width: '100%', height: '100%', resizeMode: 'cover',
   },
   avatarCircleFocused: { borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.15)' },
   avatarText: { color: '#FFF', fontWeight: 'bold', fontSize: 11 },
@@ -106,27 +120,27 @@ function BottomTabs() {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Home" icon="🏠" /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Home" icon="home" /> }}
       />
       <Tab.Screen
         name="Search"
         component={SearchScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Search" icon="🔍" /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Search" icon="search" /> }}
       />
       <Tab.Screen
         name="Library"
         component={WatchlistScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Library" icon="🔖" /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Library" icon="bookmark" /> }}
       />
       <Tab.Screen
         name="History"
         component={HistoryScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="History" icon="⏱" /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="History" icon="clock" /> }}
       />
       <Tab.Screen
         name="Stats"
         component={StatsScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Stats" icon="📊" /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Stats" icon="bar-chart-2" /> }}
       />
       <Tab.Screen
         name="Profile"
@@ -142,16 +156,18 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <WatchlistProvider>
-          <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="Main" component={BottomTabs} />
-              <Stack.Screen name="Details" component={DetailsScreen} options={{ animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="Player" component={PlayerScreen} options={{ animation: 'fade' }} />
-              <Stack.Screen name="Auth" component={AuthScreen} options={{ animation: 'slide_from_bottom' }} />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </WatchlistProvider>
+        <ProfileProvider>
+          <WatchlistProvider>
+            <NavigationContainer>
+              <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="Main" component={BottomTabs} />
+                <Stack.Screen name="Details" component={DetailsScreen} options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="Player" component={PlayerScreen} options={{ animation: 'fade' }} />
+                <Stack.Screen name="Auth" component={AuthScreen} options={{ animation: 'slide_from_bottom' }} />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </WatchlistProvider>
+        </ProfileProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

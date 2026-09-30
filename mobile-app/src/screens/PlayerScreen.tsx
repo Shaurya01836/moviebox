@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet, View, Text, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator,
+  StyleSheet, View, Text, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, NavigationProp } from '@react-navigation/native';
@@ -8,7 +8,43 @@ import { WebView } from 'react-native-webview';
 import { Movie } from '../lib/tmdb';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const VIDSRC_BASE = 'https://vidsrc.to/embed';
+
+type PlayerProvider = {
+  id: string;
+  name: string;
+  getUrl: (tmdbId: string | number, type: 'movie' | 'tv', season?: number, episode?: number) => string;
+};
+
+const PROVIDERS: PlayerProvider[] = [
+  {
+    id: 'vidy',
+    name: 'Server 1 (Vidy)',
+    getUrl: (tmdbId, type, season = 1, episode = 1) => type === 'movie' 
+      ? `https://vidy.st/movie/${tmdbId}?color=DC2626&autoplay=true`
+      : `https://vidy.st/tv/${tmdbId}/${season}/${episode}?color=DC2626&autoplay=true`
+  },
+  {
+    id: 'vidsrc',
+    name: 'Server 2 (VidSrc)',
+    getUrl: (tmdbId, type, season = 1, episode = 1) => type === 'movie' 
+      ? `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`
+      : `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`
+  },
+  {
+    id: 'vidcore',
+    name: 'Server 3 (VidCore)',
+    getUrl: (tmdbId, type, season = 1, episode = 1) => type === 'movie' 
+      ? `https://vidcore.org/embed/movie/${tmdbId}`
+      : `https://vidcore.org/embed/series/${tmdbId}/${season}/${episode}`
+  },
+  {
+    id: 'vidlink',
+    name: 'Server 4 (VidLink)',
+    getUrl: (tmdbId, type, season = 1, episode = 1) => type === 'movie'
+      ? `https://vidlink.pro/movie/${tmdbId}`
+      : `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}`
+  }
+];
 
 interface Props {
   navigation: NavigationProp<any>;
@@ -16,12 +52,13 @@ interface Props {
 }
 
 export default function PlayerScreen({ navigation, route }: Props) {
-  const { movie } = route.params as { movie: Movie };
+  const { movie, season, episode } = route.params as { movie: Movie, season?: number, episode?: number };
   const [isLoading, setIsLoading] = useState(true);
+  const [activeProviderId, setActiveProviderId] = useState<string>(PROVIDERS[0].id);
 
-  // Use the correct vidsrc endpoint for movie vs tv
   const mediaType = (movie as any).mediaKind === 'tv' ? 'tv' : 'movie';
-  const streamUrl = `${VIDSRC_BASE}/${mediaType}/${movie.id}`;
+  const activeProvider = PROVIDERS.find((p) => p.id === activeProviderId) || PROVIDERS[0];
+  const streamUrl = activeProvider.getUrl(movie.id, mediaType, season, episode);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -41,19 +78,39 @@ export default function PlayerScreen({ navigation, route }: Props) {
         {isLoading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#EF4444" />
-            <Text style={styles.loadingText}>Loading stream for "{movie.title}"...</Text>
+            <Text style={styles.loadingText}>Loading {activeProvider.name}...</Text>
           </View>
         )}
 
         <WebView
+          key={activeProviderId}
           source={{ uri: streamUrl }}
           style={styles.videoView}
           allowsFullscreenVideo
+          onLoadStart={() => setIsLoading(true)}
           onLoadEnd={() => setIsLoading(false)}
           javaScriptEnabled
           domStorageEnabled
           mediaPlaybackRequiresUserAction={false}
         />
+      </View>
+
+      {/* Server Switcher */}
+      <View style={styles.serversContainer}>
+        <Text style={styles.serversLabel}>Select Server:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.serversScroll}>
+          {PROVIDERS.map((provider) => (
+            <TouchableOpacity
+              key={provider.id}
+              style={[styles.serverBtn, activeProviderId === provider.id && styles.serverBtnActive]}
+              onPress={() => setActiveProviderId(provider.id)}
+            >
+              <Text style={[styles.serverBtnText, activeProviderId === provider.id && styles.serverBtnTextActive]}>
+                {provider.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Movie Info below player */}
@@ -91,12 +148,35 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center',
+    ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#000', zIndex: 10,
   },
   loadingText: { color: '#A1A1AA', fontSize: 13, marginTop: 12, textAlign: 'center' },
   videoView: { flex: 1, backgroundColor: '#000' },
-  infoSection: { padding: 20 },
+  serversContainer: {
+    paddingTop: 16,
+    paddingBottom: 4,
+  },
+  serversLabel: {
+    color: '#A1A1AA', fontSize: 13, fontWeight: '600', paddingHorizontal: 16, marginBottom: 8,
+  },
+  serversScroll: {
+    paddingHorizontal: 16, gap: 8,
+  },
+  serverBtn: {
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A',
+  },
+  serverBtnActive: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#EF4444',
+  },
+  serverBtnText: {
+    color: '#A1A1AA', fontSize: 13, fontWeight: '600',
+  },
+  serverBtnTextActive: {
+    color: '#EF4444',
+  },
+  infoSection: { padding: 16 },
   movieTitle: { fontSize: 20, fontWeight: '900', color: '#FFF', marginBottom: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   rating: { color: '#FBBF24', fontWeight: 'bold', fontSize: 13 },
