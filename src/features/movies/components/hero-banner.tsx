@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Play, Plus, Info, Star, Calendar, Film, Check } from 'lucide-react';
@@ -16,6 +17,7 @@ export function HeroBanner({ movies }: HeroBannerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [modalPosition, setModalPosition] = useState<{ x: number; y: number; align?: 'top' | 'bottom' } | null>(null);
   const { getByMediaId } = useWatchlist();
+  const pathname = usePathname();
 
   // Swipe and Drag handlers
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -59,7 +61,7 @@ export function HeroBanner({ movies }: HeroBannerProps) {
       return;
     }
     const distance = touchStart - touchEnd;
-    
+
     if (distance > minSwipeDistance) {
       setActiveIndex((current) => (current + 1) % movies.length);
     } else if (distance < -minSwipeDistance) {
@@ -72,7 +74,7 @@ export function HeroBanner({ movies }: HeroBannerProps) {
 
   useEffect(() => {
     if (!movies || movies.length <= 1 || isDragging) return;
-    
+
     const interval = setInterval(() => {
       setActiveIndex((current) => (current + 1) % movies.length);
     }, 6000);
@@ -83,8 +85,8 @@ export function HeroBanner({ movies }: HeroBannerProps) {
   if (!movies || movies.length === 0) return null;
 
   return (
-    <section 
-      className="relative w-full overflow-hidden bg-zinc-950 cursor-grab active:cursor-grabbing select-none group"
+    <section
+      className="relative w-full h-[85svh] md:h-auto overflow-hidden bg-zinc-950 cursor-grab active:cursor-grabbing select-none group"
       onTouchStart={onDragStart}
       onTouchMove={onDragMove}
       onTouchEnd={onDragEnd}
@@ -94,7 +96,7 @@ export function HeroBanner({ movies }: HeroBannerProps) {
       onMouseLeave={onDragEnd}
     >
       {/* Horizontal Carousel Track */}
-      <div 
+      <div
         className={`flex w-full h-full ${isDragging ? '' : 'transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]'}`}
         style={{ transform: `translateX(calc(-${activeIndex * 100}% + ${dragOffset}px))` }}
       >
@@ -106,72 +108,85 @@ export function HeroBanner({ movies }: HeroBannerProps) {
             <div key={movie.id} className="relative min-w-full h-full flex-shrink-0 flex items-end">
               {/* Background Image */}
               <div className="absolute inset-0 z-0">
-                <Image
-                  src={movie.backdropPath}
-                  alt={movie.title}
-                  fill
-                  priority={index === 0}
-                  className="object-cover object-center filter brightness-[0.8] saturate-110 pointer-events-none"
-                  sizes="100vw"
-                />
+                {movie.posterPath && (
+                  <div className="block md:hidden absolute inset-0 w-full h-full">
+                    <Image
+                      src={movie.posterPath}
+                      alt={movie.title}
+                      fill
+                      priority={index === 0}
+                      className="object-cover object-center filter brightness-[0.99] saturate-[1.0] pointer-events-none"
+                      sizes="100vw"
+                    />
+                  </div>
+                )}
+                <div className={`${movie.posterPath ? 'hidden md:block' : 'block'} absolute inset-0 w-full h-full`}>
+                  <Image
+                    src={movie.backdropPath}
+                    alt={movie.title}
+                    fill
+                    priority={index === 0}
+                    className="object-cover object-top filter brightness-[0.99] saturate-[1.0] pointer-events-none"
+                    sizes="100vw"
+                  />
+                </div>
               </div>
 
               {/* Cinematic Vignette Overlay Gradients */}
-              <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/50 to-transparent lg:w-3/4 pointer-events-none" />
+              <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 md:via-zinc-950/10 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/80 via-zinc-950/20 to-transparent md:w-2/3 pointer-events-none" />
 
               {/* Content Container */}
-              <div className="relative z-10 flex min-h-[480px] sm:min-h-[580px] lg:min-h-[680px] flex-col justify-end px-4 sm:px-10 lg:px-16 pb-12 sm:pb-16 pt-24 sm:pt-32 mx-auto max-w-7xl w-full">
-                <div className={`max-w-2xl space-y-3.5 sm:space-y-5 transition-all duration-700 ${index === activeIndex && !isDragging ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <div className="relative z-10 flex h-full md:h-auto md:min-h-[580px] lg:min-h-[680px] flex-col justify-end px-4 sm:px-10 lg:px-16 pb-20 md:pb-16 pt-24 sm:pt-32 mx-auto max-w-7xl w-full">
+                <div className={`max-w-2xl w-full flex flex-col items-center md:items-start text-center md:text-left space-y-3 sm:space-y-5 transition-all duration-700 ${index === activeIndex && !isDragging ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                   {/* Title */}
                   {movie.logoPath ? (
-                    <div className="relative h-14 w-40 sm:h-28 sm:w-72 md:h-32 md:w-80 lg:h-40 lg:w-[450px] mb-2 drop-shadow-2xl pointer-events-none">
-                      <Image 
-                        src={movie.logoPath} 
+                    <div className="relative h-20 w-48 sm:h-28 sm:w-72 md:h-32 md:w-80 lg:h-40 lg:w-[450px] mb-1 sm:mb-2 drop-shadow-2xl pointer-events-none">
+                      <Image
+                        src={movie.logoPath}
                         alt={movie.title}
                         fill
-                        className="object-contain object-left"
+                        className="object-contain object-center md:object-left"
                         sizes="(max-width: 768px) 240px, 450px"
                         priority={index === 0}
                       />
                     </div>
                   ) : (
-                    <h1 className="text-2xl xs:text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-white drop-shadow-lg leading-tight pointer-events-none">
+                    <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-white drop-shadow-lg leading-tight pointer-events-none">
                       {movie.title}
                     </h1>
                   )}
 
                   {/* Metadata Row */}
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold text-zinc-200 drop-shadow pointer-events-none">
+                  <div className="flex flex-wrap justify-center md:justify-start items-center gap-2 sm:gap-3 text-[11px] sm:text-sm font-semibold text-zinc-200 drop-shadow pointer-events-none">
                     <div className="flex items-center gap-1.5 text-amber-400 bg-amber-400/10 px-2 py-0.5 sm:py-1 rounded-md backdrop-blur-sm">
-                      <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-amber-400 text-amber-400" />
+                      <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-amber-400 text-amber-400" />
                       <span className="text-white font-bold">{movie.voteAverage}/10</span>
                     </div>
                     <span className="text-zinc-500">•</span>
                     <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-400" />
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-zinc-400" />
                       <span>{movie.releaseYear}</span>
                     </div>
-                    <span className="text-zinc-500">•</span>
+                    <span className="text-zinc-500 hidden sm:inline">•</span>
                     <div className="flex items-center gap-1.5">
-                      <Film className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-400" />
+                      <Film className="h-3 w-3 sm:h-4 sm:w-4 text-zinc-400" />
                       <span className="truncate max-w-[140px] sm:max-w-none">{genreText}</span>
                     </div>
                   </div>
 
                   {/* Overview */}
-                  <p className="line-clamp-2 sm:line-clamp-3 text-xs sm:text-base text-zinc-300 leading-relaxed max-w-xl drop-shadow pointer-events-none">
+                  <p className="hidden sm:block line-clamp-2 sm:line-clamp-3 text-xs sm:text-base text-zinc-300 leading-relaxed max-w-xl drop-shadow pointer-events-none">
                     {movie.overview}
                   </p>
 
-                  {/* Action Button Row */}
-                  <div className="flex items-center gap-2.5 sm:gap-4 pt-2 sm:pt-4">
-                    <Link href={`/play/${movie.mediaKind === 'tv' ? 'tv' : 'movie'}/${movie.id}${movie.mediaKind === 'tv' ? '/1/1' : ''}`} draggable={false}>
+                  <div className="flex items-center justify-center md:justify-start gap-3 sm:gap-4 pt-3 sm:pt-4 w-full">
+                    <Link href={`/play/${(movie.mediaKind || 'movie') === 'movie' ? 'movie' : movie.mediaKind}/${movie.id}${(movie.mediaKind || 'movie') !== 'movie' ? '/1/1' : ''}?from=${encodeURIComponent(pathname)}`} draggable={false} className="flex-1 md:flex-none">
                       <button
                         type="button"
-                        className="flex items-center gap-2 rounded-full bg-white px-5 sm:px-8 py-2.5 sm:py-3.5 text-xs sm:text-sm font-bold text-zinc-950 hover:bg-zinc-200 transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer select-none"
+                        className="flex w-full md:w-auto items-center justify-center gap-2 rounded-full bg-white px-5 sm:px-8 py-2.5 sm:py-3.5 text-xs sm:text-sm font-bold text-zinc-950 hover:bg-zinc-200 transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer select-none"
                       >
-                        <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-zinc-950 text-zinc-950 ml-0.5" />
+                        <Play className="h-4 w-4 sm:h-4 sm:w-4 fill-zinc-950 text-zinc-950 ml-0.5" />
                         Play
                       </button>
                     </Link>
@@ -186,23 +201,22 @@ export function HeroBanner({ movies }: HeroBannerProps) {
                           align: 'bottom'
                         });
                       }}
-                      className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md ${
-                        isLogged
-                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/30'
-                          : 'bg-white/15 text-white border-white/20 hover:bg-white/30 backdrop-blur-md'
-                      }`}
+                      className={`flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md shrink-0 ${isLogged
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/30'
+                        : 'bg-zinc-900/80 border-white/10 text-white hover:bg-zinc-800 hover:border-white/30 backdrop-blur-md'
+                        }`}
                       title="Add to Watchlist"
                     >
-                      {isLogged ? <Check className="h-4 w-4 sm:h-5 sm:w-5" /> : <Plus className="h-4 w-4 sm:h-5 sm:w-5" />}
+                      {isLogged ? <Check className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
                     </button>
 
-                    <Link href={`/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`} draggable={false}>
+                    <Link href={`/${(movie.mediaKind || 'movie') === 'movie' ? 'movies' : movie.mediaKind}/${movie.id}`} draggable={false}>
                       <button
                         type="button"
-                        className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/20 bg-white/15 backdrop-blur-md text-white hover:bg-white/30 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md"
+                        className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-zinc-900/80 border border-white/10 text-white hover:bg-zinc-800 hover:border-white/30 transition-all hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md shadow-md shrink-0"
                         title="Details"
                       >
-                        <Info className="h-4 w-4 sm:h-5 sm:w-5" />
+                        <Info className="h-5 w-5" />
                       </button>
                     </Link>
                   </div>
@@ -219,11 +233,10 @@ export function HeroBanner({ movies }: HeroBannerProps) {
           <button
             key={index}
             onClick={() => setActiveIndex(index)}
-            className={`rounded-full transition-all duration-300 ${
-              index === activeIndex
-                ? 'h-1.5 sm:h-2 w-6 sm:w-8 bg-white'
-                : 'h-1.5 sm:h-2 w-1.5 sm:w-2 bg-white/40 hover:bg-white/60'
-            }`}
+            className={`rounded-full transition-all duration-300 ${index === activeIndex
+              ? 'h-1.5 sm:h-2 w-6 sm:w-8 bg-white'
+              : 'h-1.5 sm:h-2 w-1.5 sm:w-2 bg-white/40 hover:bg-white/60'
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
@@ -236,7 +249,7 @@ export function HeroBanner({ movies }: HeroBannerProps) {
         position={modalPosition}
         media={movies[activeIndex] ? {
           mediaId: movies[activeIndex].id,
-          mediaKind: movies[activeIndex].mediaKind === 'tv' ? 'tv' : 'movie',
+          mediaKind: movies[activeIndex].mediaKind || 'movie',
           title: movies[activeIndex].title,
           posterPath: movies[activeIndex].posterPath,
           backdropPath: movies[activeIndex].backdropPath,

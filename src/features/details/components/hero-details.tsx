@@ -9,12 +9,12 @@ import { Badge } from '@/components/ui/badge';
 
 interface HeroDetailsProps {
   media: MovieDetails | TvDetails;
-  mediaKind: 'movie' | 'tv';
+  mediaKind: 'movie' | 'tv' | 'anime';
 }
 
 export function HeroDetails({ media, mediaKind }: HeroDetailsProps) {
   // Safe cast since we know which is which
-  const tvMedia = mediaKind === 'tv' ? (media as TvDetails) : null;
+  const tvMedia = (mediaKind === 'tv' || mediaKind === 'anime') ? (media as TvDetails) : null;
   const movieMedia = mediaKind === 'movie' ? (media as MovieDetails) : null;
 
   // Formatting dates
@@ -32,7 +32,7 @@ export function HeroDetails({ media, mediaKind }: HeroDetailsProps) {
     { label: 'Language', value: media.originalLanguage || 'EN' },
   ];
 
-  if (mediaKind === 'tv' && tvMedia) {
+  if ((mediaKind === 'tv' || mediaKind === 'anime') && tvMedia) {
     metaItems.push(
       { label: 'First Aired', value: firstAired },
       { label: 'Last Aired', value: lastAired },
@@ -92,7 +92,7 @@ export function HeroDetails({ media, mediaKind }: HeroDetailsProps) {
             {/* Action Buttons Row */}
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 pt-1 sm:pt-2">
               <Link 
-                href={mediaKind === 'tv' ? `/play/tv/${media.id}/1/1` : `/play/movie/${media.id}`}
+                href={mediaKind === 'movie' ? `/play/movie/${media.id}` : `/play/${mediaKind}/${media.id}/1/1`}
                 className="flex items-center gap-2 rounded-full bg-white px-5 sm:px-8 py-2.5 sm:py-3.5 text-xs sm:text-base font-bold text-zinc-950 transition-all hover:bg-zinc-200 hover:scale-105 active:scale-95 shadow-xl shadow-white/10 cursor-pointer select-none"
               >
                 <Play className="h-4 w-4 sm:h-5 sm:w-5 fill-zinc-950 text-zinc-950" />
@@ -104,7 +104,7 @@ export function HeroDetails({ media, mediaKind }: HeroDetailsProps) {
 
             {/* Sub-meta (Year, Runtime, Age, Rating) */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm md:text-base text-zinc-300 pt-1.5 sm:pt-2 font-medium">
-              <span>{mediaKind === 'tv' && tvMedia?.status === 'Ended' ? `${media.releaseYear}-${new Date().getFullYear()}` : media.releaseYear}</span>
+              <span>{(mediaKind === 'tv' || mediaKind === 'anime') && tvMedia?.status === 'Ended' ? `${media.releaseYear}-${new Date().getFullYear()}` : media.releaseYear}</span>
               <span className="text-zinc-600">•</span>
               <span>{media.durationMinutes || tvMedia?.durationMinutes || '44'}m</span>
               <span className="text-zinc-600">•</span>
@@ -120,7 +120,7 @@ export function HeroDetails({ media, mediaKind }: HeroDetailsProps) {
 
             {/* Creator / Director */}
             <div className="text-xs sm:text-sm text-zinc-400 font-medium">
-              {mediaKind === 'tv' ? 'Creator: ' : 'Director: '}
+              {(mediaKind === 'tv' || mediaKind === 'anime') ? 'Creator: ' : 'Director: '}
               <span className="text-zinc-200">{tvMedia?.creator || movieMedia?.director || 'Unknown'}</span>
             </div>
 
@@ -157,7 +157,7 @@ export function HeroDetails({ media, mediaKind }: HeroDetailsProps) {
               ))}
             </div>
             
-            {mediaKind === 'tv' && tvMedia?.networks && tvMedia.networks.length > 0 && (
+            {(mediaKind === 'tv' || mediaKind === 'anime') && tvMedia?.networks && tvMedia.networks.length > 0 && (
               <div className="mt-4 sm:mt-6 flex justify-end">
                 <span className="text-xl sm:text-2xl font-black text-white/40 tracking-tighter uppercase">{tvMedia.networks[0]}</span>
               </div>

@@ -152,7 +152,7 @@ export default function WatchlistScreen({ navigation }: Props) {
             <TextInput
               style={styles.searchInput}
               value={searchQ}
-              onChangeText={(t) => { setSearchQ(t); setCurrentPage(1); }}
+              onChangeText={(t: string) => { setSearchQ(t); setCurrentPage(1); }}
               placeholder={`Filter ${title}...`}
               placeholderTextColor="#52525B"
             />
@@ -312,9 +312,9 @@ const styles = StyleSheet.create({
 
   expandedCard: { backgroundColor: '#0F0F13', borderRadius: 24, marginBottom: 16, borderWidth: 1, borderColor: '#27272A', overflow: 'hidden' },
   expandedBanner: { height: 140, position: 'relative', justifyContent: 'flex-end', padding: 20 },
-  bannerPosters: { ...StyleSheet.absoluteFillObject, flexDirection: 'row' },
+  bannerPosters: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
   bannerPosterImg: { flex: 1, height: '100%', resizeMode: 'cover', opacity: 0.6 },
-  bannerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15,15,19,0.7)' },
+  bannerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,15,19,0.7)' },
   bannerTextContainer: { position: 'relative', zIndex: 10 },
   expandedTitle: { color: '#FFF', fontSize: 24, fontWeight: '900', marginBottom: 2 },
   expandedSubtitle: { color: '#A1A1AA', fontSize: 13, fontWeight: '500' },

@@ -92,7 +92,7 @@ export default function HomeScreen({ navigation }: Props) {
             <ScrollView
               ref={heroScrollRef}
               horizontal pagingEnabled showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={(e) => {
+              onMomentumScrollEnd={(e: any) => {
                 setActiveHeroIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH));
               }}
             >
@@ -172,8 +172,8 @@ export default function HomeScreen({ navigation }: Props) {
                 showsHorizontalScrollIndicator={false}
                 data={genreMovies}
                 keyExtractor={(m) => m.id}
-                renderItem={({ item }) => (
-                  <MovieCard movie={item} onPress={(m) => navigation.navigate('Details', { movie: m })} />
+                renderItem={({ item }: { item: Movie }) => (
+                  <MovieCard movie={item} onPress={(m: Movie) => navigation.navigate('Details', { movie: m })} />
                 )}
               />
             </>
@@ -189,8 +189,8 @@ export default function HomeScreen({ navigation }: Props) {
                 horizontal showsHorizontalScrollIndicator={false}
                 data={trendingMovies}
                 keyExtractor={(m) => m.id}
-                renderItem={({ item }) => (
-                  <MovieCard movie={item} onPress={(m) => navigation.navigate('Details', { movie: m })} />
+                renderItem={({ item }: { item: Movie }) => (
+                  <MovieCard movie={item} onPress={(m: Movie) => navigation.navigate('Details', { movie: m })} />
                 )}
                 style={{ marginBottom: 24 }}
               />
@@ -205,8 +205,8 @@ export default function HomeScreen({ navigation }: Props) {
                 horizontal showsHorizontalScrollIndicator={false}
                 data={popularMovies}
                 keyExtractor={(m) => m.id}
-                renderItem={({ item }) => (
-                  <MovieCard movie={item} onPress={(m) => navigation.navigate('Details', { movie: m })} />
+                renderItem={({ item }: { item: Movie }) => (
+                  <MovieCard movie={item} onPress={(m: Movie) => navigation.navigate('Details', { movie: m })} />
                 )}
               />
             </>

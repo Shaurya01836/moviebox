@@ -2,7 +2,9 @@
 
 import { TmdbService } from '@/services/tmdb.service';
 
-export async function fetchMediaCast(mediaId: string, mediaKind: 'movie' | 'tv') {
+import { MediaKind } from '@/types/movie';
+
+export async function fetchMediaCast(mediaId: string, mediaKind: MediaKind) {
   try {
     if (mediaKind === 'movie') {
       const details = await TmdbService.getMovieDetails(mediaId);

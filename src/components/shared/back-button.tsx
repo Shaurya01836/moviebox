@@ -3,10 +3,14 @@
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 
-export function BackButton() {
+export function BackButton({ onClick }: { onClick?: () => void }) {
   const router = useRouter();
 
   const handleBack = () => {
+    if (onClick) {
+      onClick();
+      return;
+    }
     // If there is history, router.back() preserves session search query state & opens SearchOverlay automatically
     if (window.history.length > 1) {
       router.back();

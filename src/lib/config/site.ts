@@ -4,7 +4,8 @@ export const siteConfig = {
   mainNav: [
     { title: 'Home', href: '/' },
     { title: 'Movies', href: '/movies' },
-    { title: 'TV Shows', href: '/tv' },
+    { title: 'Shows', href: '/tv' },
+    { title: 'Anime', href: '/anime' },
     { title: 'Watchlist', href: '/watchlist' },
   ],
 };

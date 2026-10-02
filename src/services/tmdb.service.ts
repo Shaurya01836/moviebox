@@ -51,6 +51,7 @@ export class TmdbService {
         item.media_type === 'tv' ? 'TV Show' : 'Movie',
         ...(item.genre_ids?.includes(16) ? ['Animation'] : [])
       ],
+      mediaKind: item.media_type === 'tv' ? 'tv' : 'movie',
       qualityBadge: item.vote_average && item.vote_average >= 8 ? '4K' : 'HD',
       isTrending: true,
     };
@@ -60,15 +61,15 @@ export class TmdbService {
     const promises = movies.map(async (movie) => {
       try {
         const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
-        const type = movie.mediaKind === 'tv' ? 'tv' : 'movie';
-        const url = `${env.tmdb.baseUrl}/${type}/${movie.id}/images?api_key=${apiKey}&include_image_language=en,null`;
+        const type = (movie.mediaKind === 'tv' || movie.mediaKind === 'anime') ? 'tv' : 'movie';
+        const url = `${env.tmdb.baseUrl}/${type}/${movie.id}/images?api_key=${apiKey}&include_image_language=en,ja,null`;
         
         const res = await this.fetchWithRetry(url, { next: { revalidate: 3600 } });
         if (!res.ok) return movie;
         
         const data = await res.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const enLogo = data.logos?.find((l: any) => l.iso_639_1 === 'en' || l.iso_639_1 === null);
+        const enLogo = data.logos?.find((l: any) => l.iso_639_1 === 'en') || data.logos?.find((l: any) => l.iso_639_1 === null) || data.logos?.find((l: any) => l.iso_639_1 === 'ja') || data.logos?.[0];
         if (enLogo) {
           movie.logoPath = this.getPosterUrl(enLogo.file_path);
         }
@@ -231,7 +232,7 @@ export class TmdbService {
 
   static async getMovieDetails(id: string): Promise<MovieDetails | null> {
     const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
-    const url = `${env.tmdb.baseUrl}/movie/${id}?api_key=${apiKey}&append_to_response=credits,images&include_image_language=en,null`;
+    const url = `${env.tmdb.baseUrl}/movie/${id}?api_key=${apiKey}&append_to_response=credits,images&include_image_language=en,ja,null`;
 
     const res = await this.fetchWithRetry(url, {
       next: { revalidate: 3600 },
@@ -249,7 +250,7 @@ export class TmdbService {
     const director = data.credits?.crew?.find((c: any) => c.job === 'Director')?.name;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const enLogo = data.images?.logos?.find((l: any) => l.iso_639_1 === 'en' || l.iso_639_1 === null);
+    const enLogo = data.images?.logos?.find((l: any) => l.iso_639_1 === 'en') || data.images?.logos?.find((l: any) => l.iso_639_1 === null) || data.images?.logos?.find((l: any) => l.iso_639_1 === 'ja') || data.images?.logos?.[0];
     const logoPath = enLogo?.file_path ? this.getPosterUrl(enLogo.file_path) : undefined;
 
     return {
@@ -286,7 +287,7 @@ export class TmdbService {
 
   static async getTvDetails(id: string): Promise<TvDetails | null> {
     const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
-    const url = `${env.tmdb.baseUrl}/tv/${id}?api_key=${apiKey}&append_to_response=credits,images&include_image_language=en,null`;
+    const url = `${env.tmdb.baseUrl}/tv/${id}?api_key=${apiKey}&append_to_response=credits,images&include_image_language=en,ja,null`;
 
     const res = await this.fetchWithRetry(url, {
       next: { revalidate: 3600 },
@@ -302,7 +303,7 @@ export class TmdbService {
     const creator = data.created_by?.[0]?.name;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const enLogo = data.images?.logos?.find((l: any) => l.iso_639_1 === 'en' || l.iso_639_1 === null);
+    const enLogo = data.images?.logos?.find((l: any) => l.iso_639_1 === 'en') || data.images?.logos?.find((l: any) => l.iso_639_1 === null) || data.images?.logos?.find((l: any) => l.iso_639_1 === 'ja') || data.images?.logos?.[0];
     const logoPath = enLogo?.file_path ? this.getPosterUrl(enLogo.file_path) : undefined;
 
     return {
@@ -401,6 +402,66 @@ export class TmdbService {
       return results.flat();
     } catch (err) {
       console.error('Error fetching all TV episodes:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch Anime (TV with language=ja & genre=16)
+   */
+  static async getTrendingAnime(page = 1): Promise<Movie[]> {
+    const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
+    const animeList: Movie[] = [];
+    let currentPage = page;
+    const limit = 20;
+    
+    // Fetch multiple pages of global trending TV shows and filter for Anime
+    while (animeList.length < limit && currentPage <= page + 4) {
+      const url = `${env.tmdb.baseUrl}/trending/tv/week?api_key=${apiKey}&page=${currentPage}`;
+      try {
+        const res = await this.fetchWithRetry(url, { next: { revalidate: 3600 } });
+        if (!res.ok) break;
+        
+        const data: RawTmdbSearchResponse = await res.json();
+        const pageAnimes = (data.results || [])
+          .filter((r: any) => r.original_language === 'ja' && r.genre_ids?.includes(16))
+          .map(item => {
+            const movie = this.mapTmdbItemToMovie({ ...item, media_type: 'tv' });
+            movie.mediaKind = 'anime';
+            return movie;
+          });
+          
+        animeList.push(...pageAnimes);
+      } catch (err) {
+        console.error('Error fetching TMDB trending anime:', err);
+        break;
+      }
+      currentPage++;
+    }
+    
+    // Deduplicate by ID
+    const uniqueList = Array.from(new Map(animeList.map(item => [item.id, item])).values());
+    return uniqueList.slice(0, limit);
+  }
+
+  static async getPopularAnime(page = 1): Promise<Movie[]> {
+    const apiKey = env.tmdb.apiKey || '62513680a70453f584b71ef5945ccc61';
+    // To make it different from trending, we could sort by vote_average or just next page
+    const url = `${env.tmdb.baseUrl}/discover/tv?api_key=${apiKey}&with_original_language=ja&with_genres=16&sort_by=vote_average.desc&vote_count.gte=1000&page=${page}`;
+
+    try {
+      const res = await this.fetchWithRetry(url, { next: { revalidate: 3600 } });
+      if (!res.ok) return [];
+
+      const data: RawTmdbSearchResponse = await res.json();
+      const rawList = (data.results || []).map((item) => {
+        const movie = this.mapTmdbItemToMovie({ ...item, media_type: 'tv' });
+        movie.mediaKind = 'anime';
+        return movie;
+      });
+      return Array.from(new Map(rawList.map(item => [item.id, item])).values());
+    } catch (err) {
+      console.error('Error fetching TMDB popular anime:', err);
       return [];
     }
   }

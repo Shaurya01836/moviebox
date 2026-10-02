@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
+import { ScrollToTop } from '@/components/ui/scroll-to-top';
 import { siteConfig } from '@/lib/config/site';
 import { AuthProvider } from '@/features/auth/context/auth-context';
 
@@ -45,6 +46,7 @@ export default function RootLayout({
                 <Navbar />
                 <main className="flex-1 pb-24 md:pb-0 data-[fullscreen=true]:pb-0">{children}</main>
                 <Footer />
+                <ScrollToTop />
                 <ProfilePickerModal />
               </CollectionsProvider>
             </WatchlistProvider>

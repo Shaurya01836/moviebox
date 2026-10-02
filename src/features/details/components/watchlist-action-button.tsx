@@ -4,11 +4,11 @@ import * as React from 'react';
 import { Plus, Check } from 'lucide-react';
 import { WatchlistModal } from '@/features/watchlist/components/watchlist-modal';
 import { useWatchlist } from '@/features/watchlist/context/watchlist-context';
-import { MovieDetails, TvDetails } from '@/types/movie';
+import { MovieDetails, TvDetails, MediaKind } from '@/types/movie';
 
 interface WatchlistActionButtonProps {
   media: MovieDetails | TvDetails;
-  mediaKind: 'movie' | 'tv';
+  mediaKind: MediaKind;
 }
 
 export function WatchlistActionButton({ media, mediaKind }: WatchlistActionButtonProps) {

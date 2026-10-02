@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { LibrarySection } from './components/library-section';
-
+import { MediaKind } from '@/types/movie';
 export default function WatchlistPage() {
   const { user } = useAuth();
   const { items, isLoading, remove } = useWatchlist();
@@ -37,7 +37,7 @@ export default function WatchlistPage() {
   
   const [editingMedia, setEditingMedia] = React.useState<{
     mediaId: string;
-    mediaKind: 'movie' | 'tv';
+    mediaKind: MediaKind;
     title: string;
     posterPath: string;
     backdropPath?: string;

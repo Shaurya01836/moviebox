@@ -111,11 +111,11 @@ export default function SearchScreen({ navigation }: Props) {
       {results.length > 0 && (
         <FlatList
           data={results}
-          keyExtractor={(m) => `${m.mediaKind}-${m.id}`}
+          keyExtractor={(m: Movie) => `${m.mediaKind}-${m.id}`}
           numColumns={2}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.columnWrapper}
-          renderItem={({ item }) => (
+          renderItem={({ item }: { item: Movie }) => (
             <MovieCard
               movie={item}
               onPress={(m) => navigation.navigate('Details', { movie: m })}

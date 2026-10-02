@@ -1,14 +1,16 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BackButton } from '@/components/shared/back-button';
 import { useAuth } from '@/features/auth/context/auth-context';
 import { HistoryService } from '@/features/history/services/history.service';
+import { checkAniembedExists } from '@/app/actions';
 
 type PlayerProvider = {
   id: string;
   name: string;
-  getUrl: (params: { tmdbId: string | number; type: 'movie' | 'tv' | 'anime'; season?: number; episode?: number; startAt?: number }) => string;
+  getUrl: (params: { tmdbId: string | number; type: 'movie' | 'tv' | 'anime'; season?: number; episode?: number; startAt?: number; mediaTitle?: string }) => string | Promise<string>;
 };
 
 const PROVIDERS: PlayerProvider[] = [
@@ -48,6 +50,52 @@ const PROVIDERS: PlayerProvider[] = [
       if (type === 'movie') return `https://vidlink.pro/movie/${tmdbId}`;
       return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}`;
     }
+  },
+  {
+    id: 'aniembed',
+    name: 'AniEmbed (Anime)',
+    getUrl: async ({ tmdbId, type, season, episode, startAt, mediaTitle }) => {
+      if (type !== 'anime') return '';
+      
+      try {
+        let searchTitle = mediaTitle || '';
+        if (season && season > 1) searchTitle += ` Season ${season}`;
+        
+        const query = `
+          query ($search: String) {
+            Media (search: $search, type: ANIME, sort: SEARCH_MATCH) {
+              id
+            }
+          }
+        `;
+        
+        const res = await fetch('https://graphql.anilist.co', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, variables: { search: searchTitle } })
+        });
+        
+        const data = await res.json();
+        const anilistId = data?.data?.Media?.id;
+        
+        if (anilistId) {
+          const exists = await checkAniembedExists(anilistId, episode || 1);
+          if (exists) {
+            let url = `https://aniembed.se/e/${anilistId}/${episode}?lang=sub&autoplay=1`;
+            if (startAt && startAt > 0) url += `&t=${startAt}`;
+            return url;
+          } else {
+            return 'ERROR:NOT_FOUND';
+          }
+        } else {
+          return 'ERROR:NOT_FOUND';
+        }
+      } catch (err) {
+        console.error('Failed to get Anilist ID:', err);
+      }
+      
+      return 'ERROR:NOT_FOUND';
+    }
   }
 ];
 
@@ -72,9 +120,14 @@ export function VidLinkPlayer({
 }: VidLinkPlayerProps) {
   const [isLoading, setIsLoading] = React.useState(true);
   const [showControls, setShowControls] = React.useState(true);
-  const [activeProviderId, setActiveProviderId] = React.useState<string>(PROVIDERS[0].id);
-  const hideControlsTimer = React.useRef<NodeJS.Timeout | null>(null);
+  const [activeProviderId, setActiveProviderId] = React.useState<string>(type === 'anime' ? 'aniembed' : PROVIDERS[0].id);
+  const [iframeSrc, setIframeSrc] = React.useState<string>('');
+  const [errorState, setErrorState] = React.useState<string | null>(null);
+  const hideControlsTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user } = useAuth();
+  
+  const router = useRouter();
+  const searchParams = useSearchParams();
   
   // Track progress locally to throttle DB writes
   const latestProgress = React.useRef({ time: startAt, duration: 0 });
@@ -154,8 +207,31 @@ export function VidLinkPlayer({
     return () => clearInterval(syncInterval);
   }, [user?.id, mediaTitle, posterPath, tmdbId, type, season, episode, startAt]);
 
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchUrl = async () => {
+      setErrorState(null);
+      const activeProvider = PROVIDERS.find((p) => p.id === activeProviderId) || PROVIDERS[0];
+      const url = await activeProvider.getUrl({ tmdbId, type, season, episode, startAt, mediaTitle });
+      
+      if (isMounted) {
+        if (url === 'ERROR:NOT_FOUND') {
+          setErrorState('This media is currently not available');
+          setIframeSrc('');
+          setIsLoading(false);
+        } else if (url.startsWith('/')) {
+           setIframeSrc(`https://vidy.st${url}`);
+        } else {
+           setIframeSrc(url);
+        }
+      }
+    };
+    
+    fetchUrl();
+    return () => { isMounted = false; };
+  }, [activeProviderId, tmdbId, type, season, episode, startAt, mediaTitle]);
+
   const activeProvider = PROVIDERS.find((p) => p.id === activeProviderId) || PROVIDERS[0];
-  const iframeSrc = activeProvider.getUrl({ tmdbId, type, season, episode, startAt });
 
   return (
     <div 
@@ -164,7 +240,7 @@ export function VidLinkPlayer({
       className="w-full h-full min-h-[100dvh] overflow-hidden bg-black flex items-center justify-center relative select-none"
     >
       {/* Loading Spinner */}
-      {isLoading && (
+      {isLoading && !errorState && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-950 gap-3 text-zinc-400 overflow-hidden">
           {posterPath && (
             <div 
@@ -177,6 +253,29 @@ export function VidLinkPlayer({
         </div>
       )}
 
+      {/* Error State */}
+      {errorState && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-950 gap-4 text-zinc-400 overflow-hidden">
+          {posterPath && (
+            <div 
+              className="absolute inset-0 opacity-10 bg-cover bg-center blur-2xl scale-110"
+              style={{ backgroundImage: `url(https://image.tmdb.org/t/p/w1280${posterPath})` }}
+            />
+          )}
+          <div className="relative z-20 flex flex-col items-center text-center max-w-md px-6">
+            <div className="w-16 h-16 rounded-full bg-red-600/10 flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Media Unavailable</h3>
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              {errorState}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Auto-fading Back Button Container */}
       <div 
         className={`absolute top-4 left-4 sm:top-6 sm:left-6 z-40 pt-[env(safe-area-inset-top,0px)] transition-all duration-300 pointer-events-auto ${
@@ -184,7 +283,15 @@ export function VidLinkPlayer({
         }`}
         onMouseEnter={() => setShowControls(true)}
       >
-        <BackButton />
+        <BackButton onClick={() => {
+          const from = searchParams.get('from');
+          if (from) {
+            router.push(from);
+          } else {
+            const kind = type === 'anime' ? 'anime' : (type === 'tv' ? 'tv' : 'movies');
+            router.push(`/${kind}/${tmdbId}`);
+          }
+        }} />
       </div>
 
       {/* Auto-fading Server Switcher */}
@@ -194,7 +301,7 @@ export function VidLinkPlayer({
         }`}
         onMouseEnter={() => setShowControls(true)}
       >
-        {PROVIDERS.map((provider) => (
+        {PROVIDERS.filter(p => type === 'anime' ? true : p.id !== 'aniembed').map((provider) => (
           <button
             key={provider.id}
             onClick={() => {
@@ -214,14 +321,17 @@ export function VidLinkPlayer({
         ))}
       </div>
 
-      <iframe
-        src={iframeSrc}
-        onLoad={() => setIsLoading(false)}
-        className="w-full h-full min-h-[100dvh] border-0"
-        allowFullScreen
-        allow="encrypted-media; autoplay *; fullscreen *; accelerometer; gyroscope; picture-in-picture"
-        title="Video Player"
-      />
+      {iframeSrc && (
+        <iframe
+          key={activeProviderId}
+          src={iframeSrc}
+          onLoad={() => setIsLoading(false)}
+          className="w-full h-full min-h-[100dvh] border-0"
+          allowFullScreen
+          allow="encrypted-media; autoplay *; fullscreen *; accelerometer; gyroscope; picture-in-picture"
+          title="Video Player"
+        />
+      )}
     </div>
   );
 }

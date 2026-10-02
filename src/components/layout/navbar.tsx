@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Bookmark, Calendar, BarChart3, Search, User, LogOut, Settings, Folder, History } from 'lucide-react';
+import { Home, Bookmark, Calendar, BarChart3, Search, User, LogOut, Settings, Folder, History, Film } from 'lucide-react';
 import { MobileNav } from './mobile-nav';
 import { useAuth } from '@/features/auth/context/auth-context';
 import { useProfile } from '@/features/profile/context/profile-context';
@@ -53,9 +53,9 @@ export function Navbar() {
 
   const navItems = [
     { title: 'Home', href: '/', icon: Home },
+    { title: 'Anime', href: '/anime', icon: Film },
     { title: 'My Library', href: '/watchlist', icon: Bookmark },
     { title: 'History', href: '/history', icon: History },
-    { title: 'Timeline', href: '/timeline', icon: Calendar },
     { title: 'Analytics', href: '/stats', icon: BarChart3 },
   ];
 
@@ -93,11 +93,10 @@ export function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-300 select-none ${
-                      isActive
-                        ? 'bg-white text-zinc-950 shadow-md scale-100'
-                        : 'text-zinc-300 hover:text-white hover:bg-white/10'
-                    }`}
+                    className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-300 select-none ${isActive
+                      ? 'bg-white text-zinc-950 shadow-md scale-100'
+                      : 'text-zinc-300 hover:text-white hover:bg-white/10'
+                      }`}
                   >
                     {isActive && <Icon className="h-3.5 w-3.5 fill-zinc-950 text-zinc-950" />}
                     <span>{item.title}</span>
@@ -111,11 +110,10 @@ export function Navbar() {
               {/* Professional Search Page Link / Trigger */}
               <Link
                 href="/search"
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-300 ${
-                  pathname === '/search'
-                    ? 'bg-white text-zinc-950 shadow-md'
-                    : 'text-zinc-300 hover:bg-white/15 hover:text-white'
-                }`}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-300 ${pathname === '/search'
+                  ? 'bg-white text-zinc-950 shadow-md'
+                  : 'text-zinc-300 hover:bg-white/15 hover:text-white'
+                  }`}
                 title="Search (Ctrl+K)"
               >
                 <Search className="h-3.5 w-3.5" />
@@ -205,11 +203,10 @@ export function Navbar() {
             <div className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 p-1.5 backdrop-blur-2xl shadow-xl shadow-black/30">
               <Link
                 href="/search"
-                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all ${
-                  pathname === '/search'
-                    ? 'bg-white text-zinc-950 shadow-md'
-                    : 'text-zinc-300 hover:text-white'
-                }`}
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all ${pathname === '/search'
+                  ? 'bg-white text-zinc-950 shadow-md'
+                  : 'text-zinc-300 hover:text-white'
+                  }`}
                 aria-label="Search"
               >
                 <Search className="h-3.5 w-3.5" />

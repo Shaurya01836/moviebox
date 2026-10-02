@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#09090B' },
   backdropContainer: { height: 230, position: 'relative' },
   backdrop: { width: '100%', height: '100%', resizeMode: 'cover' },
-  backdropOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(9, 9, 11, 0.55)' },
+  backdropOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(9, 9, 11, 0.55)' },
   backBtn: {
     position: 'absolute', top: 16, left: 16,
     backgroundColor: 'rgba(9,9,11,0.7)', width: 36, height: 36,
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   episodeNoImgText: { color: '#52525B', fontSize: 12 },
   episodeBadge: { position: 'absolute', top: 6, left: 6, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   episodeBadgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-  episodePlayOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.2)', alignItems: 'center', justifyContent: 'center' },
+  episodePlayOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.2)', alignItems: 'center', justifyContent: 'center' },
   episodePlayBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(239,68,68,0.9)', alignItems: 'center', justifyContent: 'center' },
   episodeTitle: { color: '#FFF', fontSize: 13, fontWeight: '600', marginBottom: 2 },
   episodeOverview: { color: '#A1A1AA', fontSize: 11, lineHeight: 16 },

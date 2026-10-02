@@ -1,4 +1,4 @@
-export type MediaKind = 'movie' | 'tv';
+export type MediaKind = 'movie' | 'tv' | 'anime';
 
 export interface Genre {
   id: string;

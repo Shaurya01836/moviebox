@@ -1,26 +1,71 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, ChevronDown, Play } from 'lucide-react';
+import { Eye, ChevronDown, ChevronLeft, ChevronRight, Play, X, Check } from 'lucide-react';
 import { TvSeason, TvEpisode } from '@/types/movie';
+import { EpisodeHeatmap } from './episode-heatmap';
 
 interface TvEpisodesProps {
   tmdbId: string | number;
   seasons: TvSeason[];
   allEpisodes: TvEpisode[];
   fallbackImage?: string;
+  mediaKind?: 'tv' | 'anime';
 }
 
-export function TvEpisodes({ tmdbId, seasons, allEpisodes, fallbackImage }: TvEpisodesProps) {
+export function TvEpisodes({ tmdbId, seasons, allEpisodes, fallbackImage, mediaKind = 'tv' }: TvEpisodesProps) {
   const validSeasons = seasons.filter((s) => s.seasonNumber > 0 && s.episodeCount > 0);
   const [activeSeason, setActiveSeason] = React.useState<number>(validSeasons[0]?.seasonNumber || 1);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [isReversed, setIsReversed] = React.useState(false);
+  const [watchedSeasons, setWatchedSeasons] = React.useState<number[]>([]);
+  const [isRatingsModalOpen, setIsRatingsModalOpen] = React.useState(false);
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   if (validSeasons.length === 0) return null;
 
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -400, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 400, behavior: 'smooth' });
+    }
+  };
+
   const currentEpisodes = allEpisodes.filter((ep) => ep.seasonNumber === activeSeason);
+  const displayedEpisodes = isReversed ? [...currentEpisodes].reverse() : currentEpisodes;
+  const isSeasonWatched = watchedSeasons.includes(activeSeason);
+
+  const toggleWatched = () => {
+    if (isSeasonWatched) {
+      setWatchedSeasons(prev => prev.filter(s => s !== activeSeason));
+      setToastMessage('Season marked as unwatched');
+    } else {
+      setWatchedSeasons(prev => [...prev, activeSeason]);
+      setToastMessage('Season marked as watched');
+    }
+  };
 
   return (
     <div className="py-8 sm:py-12 px-4 sm:px-6 lg:px-16 mx-auto max-w-[1600px] border-t border-white/5">
@@ -30,15 +75,38 @@ export function TvEpisodes({ tmdbId, seasons, allEpisodes, fallbackImage }: TvEp
         <h2 className="text-xl sm:text-2xl font-bold text-white">Episodes</h2>
         
         <div className="flex flex-wrap items-center gap-2">
-          <button className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-xs font-semibold text-zinc-300 hover:text-white transition-colors">
+          <button 
+            onClick={() => setIsRatingsModalOpen(true)}
+            className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-xs font-semibold text-zinc-300 hover:text-white transition-colors"
+          >
             Ratings
           </button>
-          <button className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-xs font-semibold text-zinc-300 hover:text-white transition-colors">
-            ↑↓ Oldest
+          <button 
+            onClick={() => setIsReversed(!isReversed)}
+            className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-xs font-semibold text-zinc-300 hover:text-white transition-colors"
+          >
+            ↑↓ {isReversed ? 'Newest' : 'Oldest'}
           </button>
-          <button className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-xs font-semibold text-zinc-300 hover:text-white transition-colors">
-            <Eye className="w-3 h-3" />
-            Mark watched
+          <button 
+            onClick={toggleWatched}
+            title={isSeasonWatched ? "Mark season as unwatched" : "Mark season as watched"}
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-xs font-semibold transition-colors ${
+              isSeasonWatched 
+                ? 'bg-white text-zinc-950 border-white hover:bg-zinc-200'
+                : 'bg-zinc-800/80 border-zinc-700/60 text-zinc-300 hover:text-white'
+            }`}
+          >
+            {isSeasonWatched ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                Watched
+              </>
+            ) : (
+              <>
+                <Eye className="w-3.5 h-3.5" />
+                Mark watched
+              </>
+            )}
           </button>
 
           {/* Season Dropdown */}
@@ -77,10 +145,32 @@ export function TvEpisodes({ tmdbId, seasons, allEpisodes, fallbackImage }: TvEp
         </div>
       </div>
 
-      {/* Horizontal Episodes Carousel */}
-      <div className="w-full overflow-x-auto scrollbar-none pb-6 -mx-4 sm:-mx-6 lg:-mx-16 px-4 sm:px-6 lg:px-16">
-        <div className="flex gap-3.5 sm:gap-4 w-max">
-          {currentEpisodes.map((ep) => (
+      {/* Horizontal Episodes Carousel with Navigation */}
+      <div className="relative group/slider">
+        {/* Left Arrow */}
+        <button
+          onClick={scrollLeft}
+          className="absolute left-0 top-[40%] -translate-y-1/2 z-30 hidden sm:flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover/slider:opacity-100 hover:bg-black/80 hover:scale-110 transition-all border border-white/10 shadow-xl ml-2 backdrop-blur-md"
+          aria-label="Scroll left"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+
+        {/* Right Arrow */}
+        <button
+          onClick={scrollRight}
+          className="absolute right-0 top-[40%] -translate-y-1/2 z-30 hidden sm:flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover/slider:opacity-100 hover:bg-black/80 hover:scale-110 transition-all border border-white/10 shadow-xl mr-2 backdrop-blur-md"
+          aria-label="Scroll right"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+
+        <div 
+          ref={scrollContainerRef}
+          className="w-full overflow-x-auto pb-6 -mx-4 sm:-mx-6 lg:-mx-16 px-4 sm:px-6 lg:px-16 scroll-smooth custom-scrollbar"
+        >
+          <div className="flex gap-3.5 sm:gap-4 w-max">
+          {displayedEpisodes.map((ep) => (
             <div key={ep.id} className="w-[230px] sm:w-[320px] shrink-0 group flex flex-col gap-2.5 sm:gap-3">
               {/* Thumbnail Container */}
               <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-zinc-900 border border-white/10 transition-transform group-hover:border-white/20">
@@ -113,7 +203,7 @@ export function TvEpisodes({ tmdbId, seasons, allEpisodes, fallbackImage }: TvEp
                 
                 {/* Play Button Overlay */}
                 <Link 
-                  href={`/play/tv/${tmdbId}/${activeSeason}/${ep.episodeNumber}`}
+                  href={`/play/${mediaKind}/${tmdbId}/${activeSeason}/${ep.episodeNumber}`}
                   className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/20 text-white backdrop-blur-[2px] transition-all opacity-0 group-hover:opacity-100 cursor-pointer z-10"
                 >
                   <div className="p-3 sm:p-4 rounded-full bg-red-600 shadow-xl border border-red-500/50 transform group-hover:scale-110 transition-transform">
@@ -121,9 +211,10 @@ export function TvEpisodes({ tmdbId, seasons, allEpisodes, fallbackImage }: TvEp
                   </div>
                 </Link>
                 
+                
                 {/* Secondary Actions */}
-                <button className="absolute top-2 right-2 p-1.5 rounded-full bg-black/40 hover:bg-black/80 border border-white/10 text-white backdrop-blur-md transition-colors opacity-0 group-hover:opacity-100 z-20">
-                  <Eye className="w-3.5 h-3.5" />
+                <button className={`absolute top-2 right-2 p-1.5 rounded-full border backdrop-blur-md transition-colors z-20 ${isSeasonWatched ? 'bg-white text-zinc-950 border-white opacity-100' : 'bg-black/40 hover:bg-black/80 border-white/10 text-white opacity-0 group-hover:opacity-100'}`}>
+                  {isSeasonWatched ? <Check className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
               </div>
 
@@ -140,6 +231,40 @@ export function TvEpisodes({ tmdbId, seasons, allEpisodes, fallbackImage }: TvEp
           ))}
         </div>
       </div>
+
+      {/* Ratings Modal */}
+      {isRatingsModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            
+            {/* Fixed Close Button */}
+            <div className="absolute top-4 right-4 z-20">
+              <button 
+                onClick={() => setIsRatingsModalOpen(false)}
+                className="p-2 rounded-full bg-zinc-900/90 backdrop-blur-md border border-white/10 shadow-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto custom-scrollbar flex-1 pt-2">
+              <EpisodeHeatmap seasons={validSeasons} allEpisodes={allEpisodes} />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && mounted && createPortal(
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full bg-white text-zinc-950 font-bold text-sm shadow-2xl animate-in slide-in-from-bottom-4 fade-in duration-300 flex items-center gap-2">
+          <Check className="w-4 h-4" />
+          {toastMessage}
+        </div>,
+        document.body
+      )}
     </div>
-  );
+  </div>
+);
 }

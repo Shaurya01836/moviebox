@@ -9,7 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { HistoryService, WatchHistoryItem } from '../services/HistoryService';
 import { SearchHistoryService, SearchHistoryItem } from '../services/SearchHistoryService';
 
-export { HistoryService, WatchHistoryItem };
+export { HistoryService };
+export type { WatchHistoryItem };
 
 interface Props { navigation: NavigationProp<any>; }
 
@@ -68,7 +69,7 @@ export default function HistoryScreen({ navigation }: Props) {
   }
 
   // Filters for watch history
-  const filteredHistory = watchHistory.filter((h) => {
+  const filteredHistory = watchHistory.filter((h: WatchHistoryItem) => {
     const matchesQuery = !filterQuery.trim() || h.title.toLowerCase().includes(filterQuery.toLowerCase());
     const matchesKind = filterKind === 'all' || h.mediaKind === filterKind;
     return matchesQuery && matchesKind;
@@ -190,9 +191,9 @@ export default function HistoryScreen({ navigation }: Props) {
           ) : (
             <FlatList
               data={filteredHistory}
-              keyExtractor={(h) => h.id}
+              keyExtractor={(h: WatchHistoryItem) => h.id}
               contentContainerStyle={styles.listContent}
-              renderItem={({ item }) => {
+              renderItem={({ item }: { item: WatchHistoryItem }) => {
                 const pct = progressPct(item);
                 return (
                   <TouchableOpacity
@@ -249,9 +250,9 @@ export default function HistoryScreen({ navigation }: Props) {
         ) : (
           <FlatList
             data={searchHistory}
-            keyExtractor={(h) => h.id}
+            keyExtractor={(h: SearchHistoryItem) => h.id}
             contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
+            renderItem={({ item }: { item: SearchHistoryItem }) => (
               <TouchableOpacity
                 style={styles.searchHistItem}
                 onPress={() => { navigation.navigate('Search'); }}

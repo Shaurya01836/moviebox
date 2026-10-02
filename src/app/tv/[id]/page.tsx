@@ -3,7 +3,6 @@ import { TmdbService } from '@/services/tmdb.service';
 import { HeroDetails } from '@/features/details/components/hero-details';
 import { CastSlider } from '@/features/details/components/cast-slider';
 import { TvEpisodes } from '@/features/details/components/tv-episodes';
-import { EpisodeHeatmap } from '@/features/details/components/episode-heatmap';
 
 interface TvPageProps {
   params: Promise<{
@@ -31,10 +30,7 @@ export default async function TvPage({ params }: TvPageProps) {
       <CastSlider cast={tvShow.cast} />
       
       {validSeasons.length > 0 && (
-        <>
-          <TvEpisodes tmdbId={id} seasons={validSeasons} allEpisodes={allEpisodes} fallbackImage={tvShow.backdropPath} />
-          <EpisodeHeatmap seasons={validSeasons} allEpisodes={allEpisodes} />
-        </>
+        <TvEpisodes tmdbId={id} seasons={validSeasons} allEpisodes={allEpisodes} fallbackImage={tvShow.backdropPath} />
       )}
     </div>
   );

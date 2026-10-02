@@ -27,7 +27,7 @@ export function PersonalDataForm({ mediaId, mediaKind }: PersonalDataFormProps) 
 
   // Local state for debouncing
   const [localRating, setLocalRating] = React.useState<number | undefined>(existingItem?.userRating);
-  const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
     setLocalRating(existingItem?.userRating);

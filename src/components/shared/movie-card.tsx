@@ -35,7 +35,7 @@ export function MovieCard({ movie, index, isPersonalCollection }: MovieCardProps
 
   const targetHref = isPersonalCollection
     ? `/collections/title/${movie.id}`
-    : `/${movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`;
+    : `/${movie.mediaKind === 'anime' ? 'anime' : movie.mediaKind === 'tv' ? 'tv' : 'movies'}/${movie.id}`;
 
   return (
     <>
@@ -59,7 +59,7 @@ export function MovieCard({ movie, index, isPersonalCollection }: MovieCardProps
           {!isPersonalCollection && (
             <div className="absolute inset-0 flex items-center justify-center gap-3 bg-zinc-950/60 opacity-0 backdrop-blur-xs transition-all duration-300 group-hover:opacity-100 pointer-events-none">
               <Link 
-                href={`/play/${movie.mediaKind === 'tv' ? 'tv' : 'movie'}/${movie.id}${movie.mediaKind === 'tv' ? '/1/1' : ''}`}
+                href={`/play/${movie.mediaKind === 'anime' ? 'anime' : movie.mediaKind === 'tv' ? 'tv' : 'movie'}/${movie.id}${(movie.mediaKind === 'tv' || movie.mediaKind === 'anime') ? '/1/1' : ''}`}
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-600/40 transition-transform hover:scale-110 pointer-events-auto cursor-pointer"
               >
                 <Play className="h-5 w-5 fill-white ml-0.5" />
@@ -110,7 +110,7 @@ export function MovieCard({ movie, index, isPersonalCollection }: MovieCardProps
           position={modalPosition}
           media={{
             mediaId: movie.id,
-            mediaKind: movie.mediaKind === 'tv' ? 'tv' : 'movie',
+            mediaKind: movie.mediaKind === 'anime' ? 'anime' : movie.mediaKind === 'tv' ? 'tv' : 'movie',
             title: movie.title,
             posterPath: movie.posterPath,
             backdropPath: movie.backdropPath,

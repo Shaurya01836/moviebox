@@ -120,32 +120,32 @@ function BottomTabs() {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Home" icon="home" /> }}
+        options={{ tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon focused={focused} label="Home" icon="home" /> }}
       />
       <Tab.Screen
         name="Search"
         component={SearchScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Search" icon="search" /> }}
+        options={{ tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon focused={focused} label="Search" icon="search" /> }}
       />
       <Tab.Screen
         name="Library"
         component={WatchlistScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Library" icon="bookmark" /> }}
+        options={{ tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon focused={focused} label="Library" icon="bookmark" /> }}
       />
       <Tab.Screen
         name="History"
         component={HistoryScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="History" icon="clock" /> }}
+        options={{ tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon focused={focused} label="History" icon="clock" /> }}
       />
       <Tab.Screen
         name="Stats"
         component={StatsScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Stats" icon="bar-chart-2" /> }}
+        options={{ tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon focused={focused} label="Stats" icon="bar-chart-2" /> }}
       />
       <Tab.Screen
         name="Profile"
         component={AuthScreen}
-        options={{ tabBarIcon: ({ focused }) => <ProfileTabIcon focused={focused} /> }}
+        options={{ tabBarIcon: ({ focused }: { focused: boolean }) => <ProfileTabIcon focused={focused} /> }}
       />
     </Tab.Navigator>
   );
